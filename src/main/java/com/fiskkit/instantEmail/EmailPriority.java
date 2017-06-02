@@ -1,14 +1,24 @@
 package com.fiskkit.model;
 
+import java.time.LocalDateTime;
 import javax.persistence.Entity;
 
 /**
- * Created by joshuaellinger on 4/8/15.
+ * Created by joshuaellinger on 4/8/15; updated by hasan on 6/02/17.
  */
 @Entity
 public class EmailPriority {
     private int userId;
     private int sendAfter;
+    private LocalDateTime addedOn;
+
+    public EmailProperty() { 
+      addedOn = LocalDateTime.now();
+    }
+
+    public LocalDateTime getAddedOn() {
+      return addedOn;
+    }
 
     public int getUserId() {
         return userId;

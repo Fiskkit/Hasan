@@ -1,7 +1,8 @@
-package com.fiskkit.model;
+package com.fiskkit.instantEmail;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.Entity;
@@ -9,8 +10,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 /**
- * Created by joshuaellinger on 3/30/15.
+ * Created by joshuaellinger on 3/30/15, updated by hdiwan on 6/02/17.
  */
+@Entity
 public class User {
 	private static final Logger LOGGER = Logger.getLogger("");
     
@@ -25,8 +27,18 @@ public class User {
     private String respectCount;
     private String respectCountHumanized;
     private String userProfileLink;
+    private LocalDateTime addedOn;
 
     public User() {
+      addedOn = LocalDateTime.now();
+    }
+
+    public LocalDateTime getAddedOn() {
+      return addedOn;
+    }
+
+    public void setAddedOn(LocalDate date) {
+      addedOn = LocalDateTime().now();
     }
 
     public User(ResultSet rs) {

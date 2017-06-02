@@ -7,6 +7,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
 /**
  * Created by joshuaellinger on 3/30/15.
@@ -19,7 +20,7 @@ public class Respect {
     Integer fiskId;
     @OneToOne @JoinColumn User user;
     @OneToOne @JoinColumn User author;
-    @ManyToOne @JoinColumn SentenceComment sentenceComment;
+    @OneToOne @JoinColumn SentenceComment sentenceComment;
     LocalDateTime addedOn;
 
     public Respect() {
