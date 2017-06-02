@@ -1,4 +1,4 @@
-package com.fiskkit.model;
+package com.fiskkit.instantEmail.models;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class Article {
     public Article() {
         this.respectList = new ArrayList<Respect>();
         this.fiskList = new ArrayList<Fisk>();
-        this.addedOn = new LocalDateTime();
+        this.addedOn = LocalDateTime.now();
     }
 
     public LocalDateTime getAddedOn() { 
@@ -113,9 +113,9 @@ public class Article {
 
     public void setFiskCount(int fiskCount) {
         this.fiskCount = fiskCount;
-        this.fiskCountHumanized = this.fiskCount;
+        this.fiskCountHumanized = new Integer(this.fiskCount).toString();
         this.fiskCountOffset = fiskCount - 3;
-        this.fiskCountOffsetHumanized = fiskCountOffset;
+        this.fiskCountOffsetHumanized = new Integer(fiskCountOffset).toString();
     }
 
     public int getFiskCount() {
@@ -132,9 +132,9 @@ public class Article {
 
     public void setNewRespectCount(int newRespectCount) {
         this.newRespectCount = newRespectCount;
-        this.newRespectCountHumanized = this.newRespectCount.toString();
+        this.newRespectCountHumanized = new Integer(this.newRespectCount).toString();
         this.newRespectCountOffset = newRespectCount - 3;
-        this.newRespectCountOffsetHumanized = newRespectCountOffset.toString();
+        this.newRespectCountOffsetHumanized = new Integer(newRespectCountOffset).toString();
     }
 
     public int getNewRespectCount() {

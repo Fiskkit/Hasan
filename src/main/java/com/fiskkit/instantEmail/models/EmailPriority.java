@@ -1,4 +1,4 @@
-package com.fiskkit.model;
+package com.fiskkit.model.models;
 
 import java.time.LocalDateTime;
 import javax.persistence.Entity;
@@ -12,7 +12,7 @@ public class EmailPriority {
     private int sendAfter;
     private LocalDateTime addedOn;
 
-    public EmailProperty() { 
+    public EmailPriority() { 
       addedOn = LocalDateTime.now();
     }
 

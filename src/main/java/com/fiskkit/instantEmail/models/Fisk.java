@@ -1,4 +1,4 @@
-package com.fiskkit.model;
+package com.fiskkit.instantEmail.models;
 
 import java.time.LocalDateTime;
 import javax.persistence.Entity;
@@ -11,7 +11,7 @@ import javax.persistence.ManyToOne;
  * Created by joshuaellinger on 4/13/15, updated by hdiwan 6/01/17.
  */
 public class Fisk {
-    @Id @GeneratedValue(strategy=GenerationType.AUTO) private int id;
+    @Id @GeneratedValue(strategy=GenerationType.AUTO) private Integer id;
     @ManyToOne @JoinColumn private User user;
 
     // FIXME @ManyToOne @JoinColumn private Article fiskedArticle;

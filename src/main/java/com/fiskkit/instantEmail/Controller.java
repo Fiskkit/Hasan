@@ -1,5 +1,6 @@
 package com.fiskkit.instantEmail;
 
+import com.fiskkit.instantEmail.models.User;
 import com.jobhive.sakimonkey.MandrillAsyncClient;
 import com.jobhive.sakimonkey.api.async.callback.ObjectResponseCallback;
 import com.jobhive.sakimonkey.data.Result;

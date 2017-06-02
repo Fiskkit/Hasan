@@ -1,4 +1,4 @@
-package com.fiskkit.instantEmail;
+package com.fiskkit.instantEmail.models;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,7 +16,7 @@ import javax.persistence.Id;
 public class User {
 	private static final Logger LOGGER = Logger.getLogger("");
     
-    @Id @GeneratedValue private int id;
+    @Id @GeneratedValue private Integer id;
     private String FirstName;
     private String LastName;
     private String Name;
@@ -37,8 +37,8 @@ public class User {
       return addedOn;
     }
 
-    public void setAddedOn(LocalDate date) {
-      addedOn = LocalDateTime().now();
+    public void setAddedOn(LocalDateTime date) {
+      addedOn = LocalDateTime.now();
     }
 
     public User(ResultSet rs) {
@@ -159,7 +159,7 @@ public class User {
 
     public void setRespectCount(String respectCount) {
         this.respectCount = respectCount;
-        this.respectCountHumanized = Integer.valueOf(respectCount);
+        this.respectCountHumanized = new Integer(respectCount).toString();
     }
 
     public String getRespectCountHumanized() {
