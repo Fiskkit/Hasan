@@ -103,19 +103,19 @@ public class Article {
         setFiskCount(getFiskCount()+1);
     }
 
-    public SentenceComment getTopComment() {
+    public List<SentenceComment> getTopComment() {
         return topComment;
     }
 
-    public void setTopComment(SentenceComment topComment) {
+    public void setTopComment(List<SentenceComment> topComment) {
         this.topComment = topComment;
     }
 
     public void setFiskCount(int fiskCount) {
         this.fiskCount = fiskCount;
-        this.fiskCountHumanized = metricPrefix(this.fiskCount);
+        this.fiskCountHumanized = this.fiskCount;
         this.fiskCountOffset = fiskCount - 3;
-        this.fiskCountOffsetHumanized = metricPrefix(fiskCountOffset);
+        this.fiskCountOffsetHumanized = fiskCountOffset;
     }
 
     public int getFiskCount() {
