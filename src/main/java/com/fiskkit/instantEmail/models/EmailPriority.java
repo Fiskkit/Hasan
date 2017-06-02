@@ -1,4 +1,4 @@
-package com.fiskkit.model.models;
+package com.fiskkit.instantEmail.models;
 
 import java.time.LocalDateTime;
 import javax.persistence.Entity;

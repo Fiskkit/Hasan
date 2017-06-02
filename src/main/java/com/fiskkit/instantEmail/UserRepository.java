@@ -1,6 +1,6 @@
-package us.d8u.instantEmail;
+package com.fiskkit.instantEmail;
 
-import us.d8u.instantEmail.models.User;
+import com.fiskkit.instantEmail.models.User;
 import org.springframework.data.repository.CrudRepository;
 
 public class UserRepository extends CrudRepository<User,Integer> {
