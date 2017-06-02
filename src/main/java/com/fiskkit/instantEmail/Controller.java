@@ -24,22 +24,24 @@ public class Controller {
 
   @RequestMapping(value="/notify", method=RequestMethod.HEAD)
   public Boolean notifyMe(@RequestParam(value="user")String userIdAsString) {
-    Long userId = new Long(userIdAsString);
+    Integer userId = new Integer(userIdAsString);
     User user = repository.findOne(userId);
     String apiKey = System.getProperty("mandrill.apiKey");
     if (apiKey != null) {
       mandrillAsyncClient = new MandrillAsyncClient(apiKey, null);
-    } 
-    Message message = new Message();
-    message.setFromEmail("contact@fiskkit.com");
-    message.setSubject("{{user.first_name}}, {{subject_end}}");
-    String templateName = "instant-wip-template";
-    mandrillAsyncClient.api().messages().sendTemplate(templateName, message, new ObjectResponseCallback<MessageStatus[]>() {
-      @Override
-      public void onSuccess (Result<MessageStatus[]> result) {
-        System.setProperty("instantEmailSuccess", "true");
-      }
-    });
-    return System.getProperty("instantEmailSuccess") == "true";
+      Message message = new Message();
+      message.setFromEmail("contact@fiskkit.com");
+      message.setSubject("{{user.first_name}}, {{subject_end}}");
+      String templateName = "instant-wip-template";
+      mandrillAsyncClient.api().messages().sendTemplate(templateName, message, new ObjectResponseCallback<MessageStatus[]>() {
+        @Override
+        public void onSuccess (Result<MessageStatus[]> result) {
+          System.setProperty("instantEmailSuccess", "true");
+        }
+      });
+    } else {
+      System.setProperty("instantEmailSuccess", "false");
+    }
+    return new Boolean(System.getProperty("instantEmailSuccess"));
   }
 }
