@@ -132,9 +132,9 @@ public class Article {
 
     public void setNewRespectCount(int newRespectCount) {
         this.newRespectCount = newRespectCount;
-        this.newRespectCountHumanized = metricPrefix(this.newRespectCount);
+        this.newRespectCountHumanized = this.newRespectCount.toString();
         this.newRespectCountOffset = newRespectCount - 3;
-        this.newRespectCountOffsetHumanized = metricPrefix(newRespectCountOffset);
+        this.newRespectCountOffsetHumanized = newRespectCountOffset.toString();
     }
 
     public int getNewRespectCount() {

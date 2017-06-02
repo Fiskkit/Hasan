@@ -9,6 +9,7 @@ import com.jobhive.sakimonkey.data.request.Message.Var;
 import com.jobhive.sakimonkey.data.response.MessageStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RestController
 @Component
 public class Controller {
-  @Autowired UserRepository repository;
+  @Autowired CrudRepository<User, Integer> repository;
 
   private MandrillAsyncClient mandrillAsyncClient = null; // lazy instantiation
 
