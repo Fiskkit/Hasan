@@ -5,19 +5,22 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
 /**
- * Created by joshuaellinger on 3/30/15.
+ * Created by joshuaellinger on 3/30/15; updated by hdiwan 6/02/17.
  */
 public class Article {
     @Id private String id;
     private String articleTitle;
     private String author;
     private String publisher;
-    @OneToMany private List<Respect> respectList;
-    @OneToMany private List<Fisk> fiskList;
-    @OneToMany private SentenceComment topComment;
+    @OneToMany @JoinColumn private List<Respect> respectList;
+    @OneToMany @JoinColumn private List<Fisk> fiskList;
+    @ManyToOne @JoinColumn private List<SentenceComment> topComment;
     private int fiskCount = 0;
     private String fiskCountHumanized;
     private int fiskCountOffset = -3;
