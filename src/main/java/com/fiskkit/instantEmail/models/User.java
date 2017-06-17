@@ -1,177 +1,78 @@
 package com.fiskkit.instantEmail.models;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.math.BigDecimal;
+
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
-/**
- * Created by joshuaellinger on 3/30/15, updated by hdiwan on 6/02/17.
- */
 @Entity
+@Table(name="users")
 public class User {
-	private static final Logger LOGGER = Logger.getLogger("");
-    
-    @Id @GeneratedValue private Integer id;
-    private String FirstName;
-    private String LastName;
-    private String Name;
-    private String Email;
-    private String facebookId;
-    private String linkedinProfileImage;
-    private String imageUrl;
-    private String respectCount;
-    private String respectCountHumanized;
-    private String userProfileLink;
-    private LocalDateTime addedOn;
+	@Id @SequenceGenerator(name="pk_sequence",sequenceName="messagesounds_id_seq", allocationSize=1) @GeneratedValue(strategy=GenerationType.SEQUENCE, generator="pk_sequence") Long id;
+	@Column(nullable=false, unique=true) Integer phpId;
+	@Column BigDecimal balance;
+	
+	public User() {
+		this.balance = BigDecimal.ZERO;
+	}
 
-    public User() {
-      addedOn = LocalDateTime.now();
-    }
-
-    public LocalDateTime getAddedOn() {
-      return addedOn;
-    }
-
-    public void setAddedOn(LocalDateTime date) {
-      addedOn = LocalDateTime.now();
-    }
-
-    public User(ResultSet rs) {
-        try {
-            int id = rs.getInt("id");
-            if (id > 0) {
-                setId(id);
-            }
-
-            String firstName = rs.getString("first_name");
-            if (!firstName.isEmpty()) {
-                setFirstName(firstName);
-            }
-
-            String lastName = rs.getString("last_name");
-            if (!lastName.isEmpty()) {
-                setLastName(lastName);
-            }
-
-            String name = rs.getString("name");
-            if (!name.isEmpty()) {
-                setName(name);
-            }
-
-            String email = rs.getString("email");
-            if (!email.isEmpty()) {
-                setEmail(email);
-            }
-
-            String facebookId = rs.getString("facebook_id");
-            if (facebookId != null && !facebookId.isEmpty()) {
-                setFacebookId(facebookId);
-            }
-
-            String linkedinProfileImage = rs.getString("linkedin_profile_image");
-            if (linkedinProfileImage != null && !linkedinProfileImage.isEmpty()) {
-                setLinkedinProfileImage(linkedinProfileImage);
-            }
-
-            String respectCount = rs.getString("respect_count");
-            if (respectCount != null && !respectCount.isEmpty()) {
-                setRespectCount(respectCount);
-            }
-
-        } catch (final SQLException e) {
-        	LOGGER.log(Level.SEVERE, "", e);
-        }
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-        this.userProfileLink = "http://fiskkit.com/user/" + id;
-    }
-
-    public String getFirstName() {
-        return FirstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.FirstName = firstName;
-    }
-
-    public String getLastName() {
-        return LastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.LastName = lastName;
-    }
-
-    public String getName() {
-        return Name;
-    }
-
-    public void setName(String name) {
-        this.Name = name;
-    }
-
-    public String getEmail() {
-        return Email;
-    }
-
-    public void setEmail(String email) {
-        this.Email = email;
-    }
-
-    public String getFacebookId() {
-        return facebookId;
-    }
-
-    public void setFacebookId(String facebookId) {
-        this.facebookId = facebookId;
-    }
-
-    public String getLinkedinProfileImage() {
-        return linkedinProfileImage;
-    }
-
-    public void setLinkedinProfileImage(String linkedinProfileImage) {
-        this.linkedinProfileImage = linkedinProfileImage;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public String getRespectCount() {
-        return respectCount;
-    }
-
-    public void setRespectCount(String respectCount) {
-        this.respectCount = respectCount;
-        this.respectCountHumanized = new Integer(respectCount).toString();
-    }
-
-    public String getRespectCountHumanized() {
-        return respectCountHumanized;
-    }
-
-    public String getUserProfileLink() {
-        return userProfileLink;
-    }
-
-    public void setUserProfileLink(String userProfileLink) {
-        this.userProfileLink = userProfileLink;
-    }
-
+	public Long getId() {
+		return id;
+	}
+	
+	public void setId(Long id) {
+		this.id = id;
+	}
+	
+	public Integer getPhpUserId() {
+		return phpId;
+	}
+	
+	public void setPhpUserId(Integer phpUserId) {
+		this.phpId = phpUserId;
+	}
+	
+	public BigDecimal getBalance() {
+		return balance;
+	}
+	
+	public void setBalance(BigDecimal balance) {
+		this.balance = balance;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((phpId == null) ? 0 : phpId.hashCode());
+		return result;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof User)) {
+			return false;
+		}
+		User other = (User) obj;
+		if (phpId == null) {
+			if (other.phpId != null) {
+				return false;
+			}
+		} else if (!phpId.equals(other.phpId)) {
+			return false;
+		}
+		return true;
+	} 
+	
 }
