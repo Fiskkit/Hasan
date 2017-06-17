@@ -1,0 +1,14 @@
+spring:
+  datasource:
+     url: jdbc:postgresql://mydbinstance.cwblf8lajcuh.us-west-1.rds.amazonaws.com/Fiskkit_Instant_Email
+     username: root
+     password: SLvX92gBJqK7ykX4yJtQvV
+ 
+  jpa:
+       hibernate:
+         ddl-auto: create-drop
+       show-sql: true 
+       
+chargebee:
+  site: fiskkit-test.chargebee.com
+  password: test_sClA1cu99xAcdJuoq2OrgK7StavXAFTeKA 
