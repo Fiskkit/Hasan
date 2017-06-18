@@ -32,38 +32,14 @@ import org.springframework.web.bind.annotation.RestController;
 @Component
 public class Controller {
 	private static Logger logger = LoggerFactory.getLogger(Controller.class);
-	@Autowired(required = false)
+
+	@Autowired
 	UserRepository repository;
 
-	@RequestMapping(value = "/newuser", method = RequestMethod.POST)
-	public ResponseEntity<User> newUser(@RequestParam String phpUserId) {
-		User user = new User();
-		user.setPhpUserId(Integer.parseInt(phpUserId));
-		repository.save(user);
-		return new ResponseEntity<User>(repository.findByPhpId(Integer.parseInt(phpUserId)), HttpStatus.CREATED);
-
-	}
-
 	@RequestMapping(value = "/balance", method = RequestMethod.GET)
-	public ResponseEntity<String> getBalance(@RequestParam(name = "user") String mysqlUserId) {
-		Integer mysqlUser = new Integer(mysqlUserId);
-		String USER_URL = "http://fiskkit-dev-2014-11.elasticbeanstalk.com/api/v1/users/" + mysqlUser;
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String, String> user = null;
-		try {
-			user = mapper.readValue(IOUtils.toString(new URL(USER_URL).openStream(), "UTF-8"),
-					new TypeReference<Map<String, String>>() {
-					});
-		} catch (JsonParseException e) {
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return new ResponseEntity<String>(user.get("balance"), HttpStatus.OK);
+	public ResponseEntity<Double> getBalance(@RequestParam(name = "user") String userId) {
+		User user = repository.findOne(Long.parseLong(userId));
+		return new ResponseEntity<Double>(user.getBalance().doubleValue(), HttpStatus.OK);
 	}
 
 	// FIXME should be patch, but spring-boot gives "Request method 'PATCH' not
@@ -108,13 +84,17 @@ public class Controller {
 
 		user.setBalance(newBalance);
 		repository.save(user);
-		logger.info("Subscription adjusted for" + user.getPhpUserId());
+		logger.info("Subscription adjusted for" + user.getPhpId());
 		return new ResponseEntity<User>(repository.findByPhpId(phpUser), HttpStatus.valueOf(209));
 	}
 
 	@Bean
-	public User newUser() {
+	public User user() {
 		return new User();
 	}
 
+	@Bean
+	public UserRepository getRepo() {
+		return repository;
+	}
 }
