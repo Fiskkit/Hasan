@@ -84,8 +84,8 @@ public class Application {
 		} catch (SQLException e2) {
 			e2.printStackTrace();
 		}
-		// FIXME how to get all users?
-		String json = readUrl("http://fiskkit-dev-2014-11.elasticbeanstalk.com/api/v1/users");
+		String json = readUrl(
+				"http://fiskkit-dev-2014-11.elasticbeanstalk.com/api/v1/users?limit=" + Integer.MAX_VALUE);
 		JSONTokener tokener = new JSONTokener(json);
 		JSONObject obj = null;
 		try {
