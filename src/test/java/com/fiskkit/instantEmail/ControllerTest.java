@@ -34,12 +34,6 @@ public class ControllerTest {
 	}
 
 	@Test
-	public void importUsers() {
-		assertThat(restTemplate.postForObject("http://localhost:" + port + "/user", null, Boolean.class))
-				.isEqualTo(Boolean.TRUE);
-	}
-
-	@Test
 	public void updateBalanceTest() {
 		assertThat(restTemplate
 				.postForObject("http://localhost:" + port + "/balance?user=19&amount=1", null, User.class).getBalance())
