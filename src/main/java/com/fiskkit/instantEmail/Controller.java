@@ -53,7 +53,7 @@ public class Controller {
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, String> userFromFiskkit = null;
 		try {
-			user = mapper.readValue(IOUtils.toString(new URL(USER_URL).openStream(), "UTF-8"),
+			userFromFiskkit = mapper.readValue(IOUtils.toString(new URL(USER_URL).openStream(), "UTF-8"),
 					new TypeReference<Map<String, String>>() {
 					});
 		} catch (JsonParseException e) {
