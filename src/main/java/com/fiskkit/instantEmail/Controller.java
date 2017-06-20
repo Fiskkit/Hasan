@@ -2,20 +2,12 @@ package com.fiskkit.instantEmail;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Map;
 
 import com.chargebee.Environment;
 import com.chargebee.Result;
 import com.chargebee.models.Subscription;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fiskkit.instantEmail.models.User;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +38,8 @@ public class Controller {
 	// supported" when RequestMethod.PATCH is used here
 	@RequestMapping(value = "/balance", method = RequestMethod.POST)
 	public ResponseEntity<User> refreshSubscription(@RequestParam(name = "user") String mysqlUserId,
-			@RequestParam(name = "amount") BigDecimal amount) {
+			@RequestParam(name = "email") String email, @RequestParam(name = "first") String firstName,
+			@RequestParam(name = "last") String lastName, @RequestParam(name = "amount") BigDecimal amount) {
 		Integer phpUser = Integer.parseInt(mysqlUserId);
 		User user = repository.findByPhpId(phpUser);
 		String USER_URL = "http://fiskkit-dev-2014-11.elasticbeanstalk.com/api/v1/users/" + phpUser;
