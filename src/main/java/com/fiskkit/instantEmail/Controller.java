@@ -42,34 +42,15 @@ public class Controller {
 			@RequestParam(name = "last") String lastName, @RequestParam(name = "amount") BigDecimal amount) {
 		Integer phpUser = Integer.parseInt(mysqlUserId);
 		User user = repository.findByPhpId(phpUser);
-		String USER_URL = "http://fiskkit-dev-2014-11.elasticbeanstalk.com/api/v1/users/" + phpUser;
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String, String> userFromFiskkit = null;
-		try {
-			userFromFiskkit = mapper.readValue(IOUtils.toString(new URL(USER_URL).openStream(), "UTF-8"),
-					new TypeReference<Map<String, String>>() {
-					});
-		} catch (JsonParseException e) {
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
 		Result result = null;
+		Environment.configure("fiskkit-test.chargebee.com", "test_sClA1cu99xAcdJuoq2OrgK7StavXAFTeKA");
+		logger.info("Envionment configured!");
 		try {
-			Environment.configure(System.getProperty("chargbee.site"), System.getProperty("chargebee.password"));
-			logger.info("Envionment configured!");
-			result = Subscription.create().id("HwxfyiHNUFzaiWO").planId("starter")
-					.customerEmail(userFromFiskkit.get("email")).customerLastName(userFromFiskkit.get("last_name"))
-					.customerFirstName(userFromFiskkit.get("first_name")).request();
-			logger.info("Subscription requested");
-
+			result = Subscription.create().id("HwxfyiHNUFzaiWO").planId("starter").customerEmail(email)
+					.customerLastName(lastName).customerFirstName(firstName).request();
+			logger.info("Subscription received -- " + result.toString());
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 		}
 		logger.debug(result.toString());
 
