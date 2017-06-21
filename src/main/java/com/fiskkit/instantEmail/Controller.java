@@ -3,11 +3,10 @@ package com.fiskkit.instantEmail;
 import java.io.IOException;
 import java.math.BigDecimal;
 
-import com.chargebee.Environment;
-import com.chargebee.Result;
-import com.chargebee.models.Subscription;
+// import com.chargebee.Environment;
+// import com.chargebee.Result;
+// import com.chargebee.models.Subscription;
 import com.fiskkit.instantEmail.models.User;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +41,8 @@ public class Controller {
 			@RequestParam(name = "last") String lastName, @RequestParam(name = "amount") BigDecimal amount) {
 		Integer phpUser = Integer.parseInt(mysqlUserId);
 		User user = repository.findByPhpId(phpUser);
+    /*
+     // TODO get chargebee configured.
 		Result result = null;
 		Environment.configure("fiskkit-test.chargebee.com", "test_sClA1cu99xAcdJuoq2OrgK7StavXAFTeKA");
 		logger.info("Envionment configured!");
@@ -53,13 +54,14 @@ public class Controller {
 			logger.error(e.getMessage(), e);
 		}
 		logger.debug(result.toString());
+    */
 
-		BigDecimal newBalance = user.getBalance().subtract(amount);
+		BigDecimal newBalance = user.getBalance().add(amount);
 
 		user.setBalance(newBalance);
 		repository.save(user);
-		logger.info("Subscription adjusted for" + user.getPhpId());
-		return new ResponseEntity<User>(repository.findByPhpId(phpUser), HttpStatus.valueOf(209));
+		logger.info("Balance adjusted for " + user.getPhpId() + " to "+newBalance.toString());
+		return new ResponseEntity<User>(repository.findByPhpId(phpUser), HttpStatus.CREATED);
 	}
 
 	@Bean
