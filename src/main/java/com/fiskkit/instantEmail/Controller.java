@@ -56,11 +56,10 @@ public class Controller {
 		logger.debug(result.toString());
     */
 
-		BigDecimal newBalance = user.getBalance().add(amount);
+		user.setBalance(user.getBalance().add(amount));
 
-		user.setBalance(newBalance);
 		repository.save(user);
-		logger.info("Balance adjusted for " + user.getPhpId() + " to "+newBalance.toString());
+		logger.info("Balance adjusted for " + user.getPhpId() + " to "+user.getBalance());
 		return new ResponseEntity<User>(repository.findByPhpId(phpUser), HttpStatus.CREATED);
 	}
 

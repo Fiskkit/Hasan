@@ -82,4 +82,8 @@ public class User {
 		return true;
 	}
 
+  @Override
+  public String toString() {
+    return "[User: "+this.getId().toString()+" {phpId: "+this.getPhpId()+", "+this.getBalance();
+  }
 }
