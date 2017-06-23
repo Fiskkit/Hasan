@@ -11,3 +11,7 @@ spring:
   logging:
     level:
       root: ALL
+
+flyway:
+  enabled: true # Enable flyway.
+  locations: ""
