@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.Date;
 import java.util.Map;
 
 import com.chargebee.Environment;
@@ -12,6 +11,7 @@ import com.chargebee.Result;
 import com.chargebee.models.Customer;
 import com.chargebee.models.PaymentSource;
 import com.chargebee.models.Subscription;
+import com.chargebee.models.Subscription.Status;
 import com.chargebee.models.enums.Gateway;
 import com.fiskkit.instantEmail.models.User;
 import com.google.gson.JsonObject;
@@ -40,15 +40,15 @@ public class Controller {
 
 	@RequestMapping(value = "/valid", method = RequestMethod.GET)
 	public ResponseEntity<Boolean> getBalance(@RequestParam(name = "subscription") String subscriptionId) {
-		Subscription subscription = null;
+		Status status = null;
 		try {
-			subscription = Subscription.retrieve(subscriptionId).request().subscription();
+			status = Subscription.retrieve(subscriptionId).request().subscription().status();
 		} catch (IOException e) {
-			logger.error(e.getMessage(), e);
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		Boolean balance = subscription.startDate().after(new Date())
-				&& subscription.currentTermEnd().before(new Date());
-		return new ResponseEntity<Boolean>(balance, HttpStatus.OK);
+
+		return new ResponseEntity<Boolean>(status == Status.ACTIVE, HttpStatus.OK);
 	}
 
 	// FIXME should be patch, but spring-boot gives "Request method 'PATCH' not
