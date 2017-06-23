@@ -1,6 +1,5 @@
 package com.fiskkit.instantEmail.models;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import javax.persistence.Column;
@@ -23,10 +22,15 @@ public class User {
 	Integer phpId;
 
 	@Column
-	BigDecimal balance = BigDecimal.ZERO;
-
+	String chargebeeId;
+	@Column
+	String paymentSourceId;
 	@Column
 	LocalDateTime addedAt = LocalDateTime.now();
+
+	public LocalDateTime getAddedAt() {
+		return addedAt;
+	}
 
 	public Long getId() {
 		return id;
@@ -44,12 +48,20 @@ public class User {
 		phpId = phpUserId;
 	}
 
-	public BigDecimal getBalance() {
-		return balance;
+	public String getChargebeeId() {
+		return chargebeeId;
 	}
 
-	public void setBalance(BigDecimal balance) {
-		this.balance = balance;
+	public void setChargebeeId(String chargebeeId) {
+		this.chargebeeId = chargebeeId;
+	}
+
+	public String getPaymentSourceId() {
+		return paymentSourceId;
+	}
+
+	public void setPaymentSourceId(String paymentSourceId) {
+		this.paymentSourceId = paymentSourceId;
 	}
 
 	@Override
@@ -82,8 +94,10 @@ public class User {
 		return true;
 	}
 
-  @Override
-  public String toString() {
-    return "[User: "+this.getId().toString()+" {phpId: "+this.getPhpId()+", "+this.getBalance();
-  }
+	@Override
+	public String toString() {
+		return "[User: " + getId().toString() + " {phpId: " + getPhpId() + ", chargebeeId: " + getChargebeeId()
+				+ ", paymentSourceId: " + getPaymentSourceId();
+	}
+
 }
