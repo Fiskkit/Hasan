@@ -2,10 +2,6 @@ package com.fiskkit.instantEmail;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
-
-import com.fiskkit.instantEmail.models.User;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,9 +30,9 @@ public class ControllerTest {
 	}
 
 	@Test
-	public void updateBalanceTest() {
-		assertThat(restTemplate
-				.postForObject("http://localhost:" + port + "/balance?user=19&amount=1", null, User.class).getBalance())
-						.isGreaterThanOrEqualTo(BigDecimal.ONE);
+	public void userValidTest() {
+		assertThat(restTemplate.postForObject("http://localhost:" + port + "/valid?user=19", null, Boolean.class)
+				.booleanValue() == true);
+
 	}
 }
