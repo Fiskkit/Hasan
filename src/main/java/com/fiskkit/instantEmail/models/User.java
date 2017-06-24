@@ -55,14 +55,6 @@ public class User {
 		this.chargebeeId = chargebeeId;
 	}
 
-	public String getPaymentSourceId() {
-		return paymentSourceId;
-	}
-
-	public void setPaymentSourceId(String paymentSourceId) {
-		this.paymentSourceId = paymentSourceId;
-	}
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -95,8 +87,7 @@ public class User {
 
 	@Override
 	public String toString() {
-		return "[User: " + getId().toString() + " {phpId: " + getPhpId() + ", chargebeeId: " + getChargebeeId()
-				+ ", paymentSourceId: " + getPaymentSourceId();
+		return "[User: " + getId().toString() + " {phpId: " + getPhpId() + ", chargebeeId: " + getChargebeeId();
 	}
 
 }
