@@ -15,3 +15,7 @@ spring:
 flyway:
   enabled: true # Enable flyway.
   locations: ""
+
+chargebee:
+  applicationEnvironment: fiskkit-dev
+  applicationSecret: test_sClA1cu99xAcdJuoq2OrgK7StavXAFTeKA
