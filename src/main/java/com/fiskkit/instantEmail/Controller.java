@@ -49,6 +49,16 @@ public class Controller {
 		return new ResponseEntity<Boolean>(status == Status.ACTIVE, HttpStatus.OK);
 	}
 
+	@RequestMapping(value = "/", method = RequestMethod.POST)
+	public ResponseEntity<String> newOrg(@RequestParam(name = "id") String organizationUniqueId,
+			@RequestParam(name = "subscription") String subscriptionId) {
+		User user = new User();
+		user.setPhpId(Integer.parseInt(organizationUniqueId));
+		user.setChargebeeId(subscriptionId);
+		repository.save(user);
+		return new ResponseEntity<String>(user.toString(), HttpStatus.CREATED);
+	}
+
 	@Bean
 	public User user() {
 		return new User();
