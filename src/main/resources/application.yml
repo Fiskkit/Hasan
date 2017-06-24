@@ -18,5 +18,5 @@ flyway:
   baselineOnMigrate: true
 
 chargebee:
-  applicationEnvironment: fiskkit-dev
-  applicationSecret: test_sClA1cu99xAcdJuoq2OrgK7StavXAFTeKA
+  applicationEnvironment: fiskkit-test
+  applicationSecret: test_raQe0j3cucuVve0wl3O4bckERSrLrHkRxl
