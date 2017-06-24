@@ -2,6 +2,7 @@ package com.fiskkit.instantEmail;
 
 import java.io.IOException;
 
+import com.chargebee.Environment;
 import com.chargebee.models.Subscription;
 import com.chargebee.models.Subscription.Status;
 import com.fiskkit.instantEmail.models.User;
@@ -9,6 +10,7 @@ import com.fiskkit.instantEmail.models.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +28,17 @@ public class Controller {
 	@Autowired
 	UserRepository repository;
 
+	@Value("${chargebee.applicationEnvironment}")
+	String chargebeeEnvironment;
+
+	@Value("${chargebee.applicationSecret}")
+	String chargebeeSecret;
+
 	@RequestMapping(value = "/valid", method = RequestMethod.GET)
 	public ResponseEntity<Boolean> getBalance(@RequestParam(name = "subscription") String subscriptionId) {
+		Environment.configure(chargebeeEnvironment, chargebeeSecret);
 		Status status = null;
+		logger.info("susbscription id requested: " + subscriptionId);
 		try {
 			status = Subscription.retrieve(subscriptionId).request().subscription().status();
 		} catch (IOException e) {
