@@ -16,3 +16,7 @@ flyway:
   enabled: true # Enable flyway.
   locations: ""
   baselineOnMigrate: true
+
+chargebee:
+  applicationEnvironment: fiskkit-dev
+  applicationSecret: test_sClA1cu99xAcdJuoq2OrgK7StavXAFTeKA

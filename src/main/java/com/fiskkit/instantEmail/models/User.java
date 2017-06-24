@@ -23,9 +23,8 @@ public class User {
 
 	@Column
 	String chargebeeId;
-	@Column
-	String paymentSourceId;
-	@Column
+
+	@Column(nullable = false)
 	LocalDateTime addedAt = LocalDateTime.now();
 
 	public LocalDateTime getAddedAt() {
