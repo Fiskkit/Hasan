@@ -31,8 +31,14 @@ public class ControllerTest {
 
 	@Test
 	public void userValidTest() {
-		assertThat(restTemplate.postForObject("http://localhost:" + port + "/valid?user=19", null, Boolean.class)
-				.booleanValue() == true);
+		assertThat((restTemplate.getForObject("http://localhost:" + port + "/valid?subscription=1sjs9hvQ5tmUbX2I1Z",
+				String.class) == "true"));
 
+	}
+
+	@Test
+	public void expiredSubscription() {
+		assertThat(restTemplate.getForObject("http://localhost:" + port + "/valid?subscription=cbdemo_dave-sub2",
+				String.class) == "false");
 	}
 }
