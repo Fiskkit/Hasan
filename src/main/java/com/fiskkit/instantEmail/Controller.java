@@ -1,6 +1,12 @@
 package com.fiskkit.instantEmail;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import com.chargebee.Environment;
 import com.chargebee.models.Subscription;
@@ -15,6 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -57,6 +64,38 @@ public class Controller {
 		user.setChargebeeId(subscriptionId);
 		repository.save(user);
 		return new ResponseEntity<String>(user.toString(), HttpStatus.CREATED);
+	}
+
+	@RequestMapping(value = "/readability", method = RequestMethod.POST)
+	public ResponseEntity<Double> readability(@RequestBody String text) {
+		Double ADJUSTMENT = 3.6365, score = 0.0, DIFFICULT_WORD_THRESHOLD = 0.05;
+		String[] wordsInText = text.split("[\\W]");
+		HashSet<String> words = (HashSet<String>) Arrays.stream(wordsInText).collect(Collectors.toSet());
+		HashSet<String> simpleWords = new HashSet<String>();
+		BufferedReader simpleList = null;
+		try {
+			simpleList = new BufferedReader(new InputStreamReader(
+					new URL("http://countwordsworth.com/download/DaleChallEasyWordList.txt").openStream()));
+		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
+			e.printStackTrace();
+		}
+		String word;
+		try {
+			while ((word = simpleList.readLine()) != null) {
+				simpleWords.add(word);
+			}
+		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
+			e.printStackTrace();
+		}
+		words.retainAll(simpleWords);
+		int countsSimpleWords = words.size();
+		float pctSimple = countsSimpleWords / wordsInText.length;
+		if (pctSimple > DIFFICULT_WORD_THRESHOLD) {
+			score = score + ADJUSTMENT;
+		}
+		return new ResponseEntity<Double>(score, HttpStatus.OK);
 	}
 
 	@Bean

@@ -41,4 +41,10 @@ public class ControllerTest {
 		assertThat(restTemplate.getForObject("http://localhost:" + port + "/valid?subscription=cbdemo_dave-sub2",
 				String.class) == "false");
 	}
+
+	@Test
+	public void readabilityOfText() {
+		String text = "the quick brown fox jumped over the lazy dog.";
+		assertThat(restTemplate.postForObject("http://localhost:" + port + "/readability", text, Double.class) < 1.00);
+	}
 }
