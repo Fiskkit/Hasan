@@ -5,7 +5,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.chargebee.Environment;
@@ -26,6 +31,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import edu.stanford.nlp.ie.crf.CRFClassifier;
+import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.ling.CoreLabel;
 
 @RestController
 @Component
@@ -96,6 +105,53 @@ public class Controller {
 			score = score + ADJUSTMENT;
 		}
 		return new ResponseEntity<Double>(score, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/entities", method = RequestMethod.GET)
+	public ResponseEntity<Map<String, Set<String>>> getEntities(@RequestParam(name = "loc") String location) {
+		BufferedReader contents = null;
+		try {
+			contents = new BufferedReader(new InputStreamReader(new URL(location).openStream()));
+		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
+			e.printStackTrace();
+		}
+		String text = null, line = null;
+		try {
+			while ((line = contents.readLine()) != null) {
+				text = text + line + "\n";
+			}
+		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
+			e.printStackTrace();
+		}
+
+		Map<String, Set<String>> map = new HashMap<>();
+		String serializedClassifier = this.getClass()
+				.getResource("edu/stanford/nlp/models/ner/english.muc.7class.distsim.crf.ser.gz").toString();
+
+		CRFClassifier<CoreLabel> classifier = CRFClassifier.getClassifierNoExceptions(serializedClassifier);
+		List<List<CoreLabel>> classify = classifier.classify(text);
+		for (List<CoreLabel> coreLabels : classify) {
+			for (CoreLabel coreLabel : coreLabels) {
+
+				String word = coreLabel.word();
+				String category = coreLabel.get(CoreAnnotations.AnswerAnnotation.class);
+				if (!"O".equals(category)) {
+					if (map.containsKey(category)) {
+						// key is already their just insert
+						map.get(category).add(word);
+					} else {
+						LinkedHashSet<String> temp = new LinkedHashSet<String>();
+						temp.add(word);
+						map.put(category, temp);
+					}
+				}
+
+			}
+
+		}
+		return new ResponseEntity<Map<String, Set<String>>>(map, HttpStatus.OK);
 	}
 
 	@Bean
