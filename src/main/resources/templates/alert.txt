@@ -1,2 +1,0 @@
-${name},
-Somebody else fisked an article that you fisked. 

@@ -4,14 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -20,7 +18,6 @@ import com.chargebee.models.Subscription;
 import com.chargebee.models.Subscription.Status;
 import com.fiskkit.instantEmail.models.User;
 
-import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,13 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import edu.stanford.nlp.ie.crf.CRFClassifier;
 import edu.stanford.nlp.ling.CoreAnnotations;
-import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
-import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
-import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import edu.stanford.nlp.util.CoreMap;
 
 @RestController
 @Component
@@ -161,54 +152,6 @@ public class Controller {
 
 		}
 		return new ResponseEntity<Map<String, Set<String>>>(map, HttpStatus.OK);
-	}
-
-	@RequestMapping(value = "/phrases", method = RequestMethod.GET)
-	public ResponseEntity<List<String>> tokenizeIntoPhrases(@RequestParam(name = "loc") String location) {
-		List<String> sentences = new ArrayList<>();
-		// creates a StanfordCoreNLP object, with POS tagging, lemmatization,
-		// NER, parsing, and coreference resolution
-		Properties props = new Properties();
-		props.put("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref");
-		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-		BufferedReader contents = null;
-		try {
-			contents = new BufferedReader(new InputStreamReader(new URL(location).openStream()));
-		} catch (IOException e) {
-			logger.error(e.getMessage(), e);
-			e.printStackTrace();
-		}
-		String text = null, line = null;
-		try {
-			while ((line = contents.readLine()) != null) {
-				text = text + line + "\n";
-			}
-		} catch (IOException e) {
-			logger.error(e.getMessage(), e);
-			e.printStackTrace();
-		}
-
-		text = Jsoup.parse(text).text();
-		// create an empty Annotation just with the given text
-		Annotation document = new Annotation(text);
-
-		// run all Annotators on this text
-		pipeline.annotate(document);
-
-		// these are all the sentences in this document
-		// a CoreMap is essentially a Map that uses class objects as keys and
-		// has values with custom types
-		List<CoreMap> phrases = document.get(SentencesAnnotation.class);
-		for (CoreMap sentence : phrases) {
-			// traversing the words in the current sentence
-			// a CoreLabel is a CoreMap with additional token-specific methods
-			for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
-				// this is the text of the token
-				sentences.add(token.get(TextAnnotation.class));
-			}
-		}
-
-		return new ResponseEntity<List<String>>(sentences, HttpStatus.OK);
 	}
 
 	@Bean
