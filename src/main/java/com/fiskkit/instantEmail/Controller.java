@@ -15,7 +15,8 @@ import java.util.stream.Collectors;
 
 import com.chargebee.Environment;
 import com.chargebee.models.Subscription;
-import com.chargebee.models.Subscription.Status;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fiskkit.instantEmail.models.User;
 
 import org.slf4j.Logger;
@@ -53,16 +54,17 @@ public class Controller {
 	@RequestMapping(value = "/valid", method = RequestMethod.GET)
 	public ResponseEntity<Boolean> getBalance(@RequestParam(name = "subscription") String subscriptionId) {
 		Environment.configure(chargebeeEnvironment, chargebeeSecret);
-		Status status = null;
 		logger.info("susbscription id requested: " + subscriptionId);
 		try {
-			status = Subscription.retrieve(subscriptionId).request().subscription().status();
+			Subscription.retrieve(subscriptionId).request().subscription().status();
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
 			e.printStackTrace();
+
+			return new ResponseEntity<Boolean>(Boolean.FALSE, HttpStatus.FAILED_DEPENDENCY);
 		}
 
-		return new ResponseEntity<Boolean>(status == Status.ACTIVE, HttpStatus.OK);
+		return new ResponseEntity<Boolean>(Boolean.TRUE, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/", method = RequestMethod.POST)
@@ -73,6 +75,18 @@ public class Controller {
 		user.setChargebeeId(subscriptionId);
 		repository.save(user);
 		return new ResponseEntity<String>(user.toString(), HttpStatus.CREATED);
+	}
+
+	@RequestMapping(value = "/callback")
+	public ResponseEntity<String> chargebeeCallback(@RequestParam Map<String, String> params) {
+		String json = null;
+		try {
+			json = new ObjectMapper().writeValueAsString(params);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		logger.info(json);
+		return new ResponseEntity<String>(json, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/readability", method = RequestMethod.POST)
