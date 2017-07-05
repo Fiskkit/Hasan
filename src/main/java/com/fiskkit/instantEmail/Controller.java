@@ -77,11 +77,11 @@ public class Controller {
 	}
 
 	@RequestMapping(value = "/callback", method = RequestMethod.POST)
-	public ResponseEntity<Void> chargebeeWebhooks(@RequestParam Map<String, String> params,
+	public ResponseEntity<String> chargebeeWebhooks(@RequestParam Map<String, String> params,
 			@RequestBody Map<String, String> body) {
 		Gson gson = new Gson();
 		logger.info("Parameters" + gson.toJson(params) + "\nCallback body: " + gson.toJson(body));
-		return new ResponseEntity<Void>((Void) null, HttpStatus.OK);
+		return new ResponseEntity<String>("null", HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/readability", method = RequestMethod.POST)
