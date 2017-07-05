@@ -3,6 +3,7 @@ package com.fiskkit.instantEmail;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,7 +17,10 @@ import java.util.stream.Collectors;
 import com.chargebee.Environment;
 import com.chargebee.models.Subscription;
 import com.fiskkit.instantEmail.models.User;
+import com.fiskkit.instantEmail.models.mysql.Users;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,10 +82,33 @@ public class Controller {
 
 	@RequestMapping(value = "/callback", method = RequestMethod.POST)
 	public ResponseEntity<String> chargebeeWebhooks(@RequestParam Map<String, String> params,
-			@RequestBody Map<String, String> body) {
+			@RequestBody Map<String, Map<String, Map<String, String>>> body) {
+		String customerId = body.get("content").get("customer").get("id");
+		String customerFirstName = body.get("content").get("customer").get("first_name");
+		String customerLastName = body.get("content").get("customer").get("last_name");
+		User user = new User();
+		user.setChargebeeId(customerId);
+		Type targetClassType = new TypeToken<List<Users>>() {
+		}.getType();
 		Gson gson = new Gson();
-		logger.info("Parameters" + gson.toJson(params) + "\nCallback body: " + gson.toJson(body));
-		return new ResponseEntity<String>("null", HttpStatus.OK);
+		List<Users> users = null;
+		try {
+			users = gson.fromJson((String) new URL("http://fiskkit-dev-2014-11.elasticbeanstalk.com/api/v1/users/")
+					.openConnection().getContent(), targetClassType);
+		} catch (JsonSyntaxException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		for (Users userFromFiskkit : users) {
+			if (userFromFiskkit.getFirst_name().equals(customerFirstName)
+					&& userFromFiskkit.getLast_name().equals(customerLastName)) {
+				user.setPhpId(userFromFiskkit.getUserId());
+				repository.save(user);
+				return new ResponseEntity<String>("null", HttpStatus.OK);
+			}
+		}
+		return new ResponseEntity<String>("error", HttpStatus.EXPECTATION_FAILED);
+
 	}
 
 	@RequestMapping(value = "/readability", method = RequestMethod.POST)
