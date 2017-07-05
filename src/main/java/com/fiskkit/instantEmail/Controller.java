@@ -15,9 +15,8 @@ import java.util.stream.Collectors;
 
 import com.chargebee.Environment;
 import com.chargebee.models.Subscription;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fiskkit.instantEmail.models.User;
+import com.google.gson.Gson;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,16 +76,12 @@ public class Controller {
 		return new ResponseEntity<String>(user.toString(), HttpStatus.CREATED);
 	}
 
-	@RequestMapping(value = "/callback")
-	public ResponseEntity<String> chargebeeCallback(@RequestParam Map<String, String> params) {
-		String json = null;
-		try {
-			json = new ObjectMapper().writeValueAsString(params);
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-		}
-		logger.info(json);
-		return new ResponseEntity<String>(json, HttpStatus.OK);
+	@RequestMapping(value = "/callback", method = RequestMethod.POST)
+	public ResponseEntity<Void> chargebeeWebhooks(@RequestParam Map<String, String> params,
+			@RequestBody Map<String, String> body) {
+		Gson gson = new Gson();
+		logger.info("Parameters" + gson.toJson(params) + "\nCallback body: " + gson.toJson(body));
+		return new ResponseEntity<Void>((Void) null, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/readability", method = RequestMethod.POST)
