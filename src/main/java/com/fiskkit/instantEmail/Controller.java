@@ -85,28 +85,28 @@ public class Controller {
 		try {
 			json = new JSONObject(rawBody);
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage(), e);
 			e.printStackTrace();
 		}
 		String customerId = null;
 		try {
 			customerId = json.getJSONObject("content").getJSONObject("customer").getString("id");
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage(), e);
 			e.printStackTrace();
 		}
 		String customerFirstName = null;
 		try {
 			customerFirstName = json.getJSONObject("content").getJSONObject("customer").getString("first_name");
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage(), e);
 			e.printStackTrace();
 		}
 		String customerLastName = null;
 		try {
 			customerLastName = json.getJSONObject("content").getJSONObject("customer").getString("last_name");
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage(), e);
 			e.printStackTrace();
 		}
 		User user = new User();
@@ -127,7 +127,7 @@ public class Controller {
 				}
 			}
 		} catch (JSONException | IOException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage(), e);
 			e.printStackTrace();
 		}
 		return new ResponseEntity<String>("failed", HttpStatus.CONFLICT);
