@@ -3,6 +3,7 @@ package com.fiskkit.instantEmail;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,6 +38,9 @@ import org.springframework.web.bind.annotation.RestController;
 import edu.stanford.nlp.ie.crf.CRFClassifier;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.ling.Word;
+import edu.stanford.nlp.process.PTBTokenizer;
+import edu.stanford.nlp.process.Tokenizer;
 
 @RestController
 @Component
@@ -76,6 +80,21 @@ public class Controller {
 		user.setChargebeeId(subscriptionId);
 		repository.save(user);
 		return new ResponseEntity<String>(user.toString(), HttpStatus.CREATED);
+	}
+
+	@RequestMapping(value = "/analyze", method = RequestMethod.POST)
+	public ResponseEntity<Map<String, String>> statistics(@RequestBody String text) {
+		Tokenizer<Word> ptbt = PTBTokenizer.factory().getTokenizer(new StringReader(text));
+		Map<String, String> ret = new HashMap<>();
+		List<Word> words = ptbt.tokenize();
+		Integer wordCount = words.size();
+		ret.put("wordCount", wordCount.toString());
+		Double totalLength = 0.0;
+		for (Word word : words) {
+			totalLength += word.word().length();
+		}
+		ret.put("averageWordLength", new Double(totalLength / wordCount).toString());
+		return new ResponseEntity<Map<String, String>>(ret, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/callback", method = RequestMethod.POST)
