@@ -2,6 +2,10 @@ package com.fiskkit.instantEmail;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,5 +50,17 @@ public class ControllerTest {
 	public void readabilityOfText() {
 		String text = "the quick brown fox jumped over the lazy dog.";
 		assertThat(restTemplate.postForObject("http://localhost:" + port + "/readability", text, Double.class) < 1.00);
+	}
+
+	@Test
+	public void statistics() {
+		String text = "the quick brown fox jumped over the lazy dog.";
+		@SuppressWarnings("unchecked")
+		Map<String, String> stats = restTemplate.postForObject("http://localhost:" + port + "/analyze", text,
+				Map.class);
+		Set<String> expectedKeys = new HashSet<>();
+		expectedKeys.add("wordCount");
+		expectedKeys.add("averageWordLength");
+		assertThat(stats.keySet().equals(expectedKeys));
 	}
 }
