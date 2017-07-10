@@ -61,6 +61,7 @@ public class ControllerTest {
 		Set<String> expectedKeys = new HashSet<>();
 		expectedKeys.add("wordCount");
 		expectedKeys.add("averageWordLength");
-		assertThat(stats.keySet().equals(expectedKeys));
+		expectedKeys.add("mostCommonWords");
+		assertThat(stats.keySet().containsAll(expectedKeys));
 	}
 }

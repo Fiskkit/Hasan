@@ -4,7 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,6 +20,9 @@ import java.util.stream.Collectors;
 import com.chargebee.Environment;
 import com.chargebee.models.Subscription;
 import com.fiskkit.instantEmail.models.User;
+import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultiset;
+import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -84,16 +90,38 @@ public class Controller {
 
 	@RequestMapping(value = "/analyze", method = RequestMethod.POST)
 	public ResponseEntity<Map<String, String>> statistics(@RequestBody String text) {
+		try {
+			text = URLDecoder.decode(text, StandardCharsets.UTF_8.toString()).toLowerCase();
+		} catch (UnsupportedEncodingException e) {
+			logger.error(e.getMessage(), e);
+			e.printStackTrace();
+		}
 		Tokenizer<Word> ptbt = PTBTokenizer.factory().getTokenizer(new StringReader(text));
 		Map<String, String> ret = new HashMap<>();
 		List<Word> words = ptbt.tokenize();
+
 		Integer wordCount = words.size();
 		ret.put("wordCount", wordCount.toString());
+		HashMultiset<Word> frequencies = HashMultiset.create();
+
 		Double totalLength = 0.0;
 		for (Word word : words) {
 			totalLength += word.word().length();
+			frequencies.add(word);
 		}
 		ret.put("averageWordLength", new Double(totalLength / wordCount).toString());
+
+		Double commonCount = Math.floor(words.size() % 10);
+
+		logger.info("threshold for commonality " + commonCount.intValue());
+
+		Set<Word> entries = frequencies.elementSet();
+
+		String freqs = Joiner.on(",").join(", ",
+				entries.stream().filter(p -> frequencies.count(p) > commonCount).collect(Collectors.toSet()));
+		freqs = freqs.replace("[", "").replace("]", "");
+		ret.put("mostCommonWords", freqs);
+		logger.info("returning " + new Gson().toJson(ret));
 		return new ResponseEntity<Map<String, String>>(ret, HttpStatus.OK);
 	}
 
@@ -240,4 +268,5 @@ public class Controller {
 	public UserRepository getRepo() {
 		return repository;
 	}
+
 }
