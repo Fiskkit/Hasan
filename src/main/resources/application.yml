@@ -20,3 +20,8 @@ flyway:
 chargebee:
   applicationEnvironment: fiskkit-test
   applicationSecret: test_raQe0j3cucuVve0wl3O4bckERSrLrHkRxl
+
+server:
+  compression: 
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
