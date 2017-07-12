@@ -1,1 +1,1 @@
-This is the subscription and billing module for fiskkit. It is written in Java by Hasan and deployed to heroku. It uses web services to seed its database and operated in a standalone manner after that.
+This is the subscription and billing module for fiskkit. It is written in Java using J2EE by Hasan and deployed to heroku. 
