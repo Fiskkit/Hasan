@@ -23,10 +23,16 @@ import com.fiskkit.instantEmail.models.User;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultiset;
 import com.google.gson.Gson;
+import com.squareup.okhttp.HttpUrl;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,11 +52,13 @@ import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.process.PTBTokenizer;
+import edu.stanford.nlp.process.Tokenizer;
 
 @RestController
 @Component
 public class Controller {
 	private static Logger logger = LoggerFactory.getLogger(Controller.class);
+	private static OkHttpClient client = new OkHttpClient();
 
 	@Autowired
 	UserRepository repository;
@@ -256,6 +264,31 @@ public class Controller {
 
 		}
 		return new ResponseEntity<Map<String, Set<String>>>(map, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/text", method = RequestMethod.GET)
+	public ResponseEntity<String> getText(@RequestParam(name = "uri") String uri) {
+		HttpUrl.Builder urlBuilder = HttpUrl.parse(uri).newBuilder();
+		urlBuilder.addQueryParameter("uri", uri);
+		String url = urlBuilder.build().toString();
+		Request request = new Request.Builder().url(url).build();
+
+		Response response = null;
+		try {
+			response = client.newCall(request).execute();
+		} catch (IOException e1) {
+			logger.error(e1.getMessage(), e1);
+			e1.printStackTrace();
+		}
+		String text = null;
+		try {
+			text = response.body().string();
+		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
+			e.printStackTrace();
+		}
+		Document soup = Jsoup.parse(text);
+		return new ResponseEntity<>(soup.text(), HttpStatus.OK);
 	}
 
 	@Bean
