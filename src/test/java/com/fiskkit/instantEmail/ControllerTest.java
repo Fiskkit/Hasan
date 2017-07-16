@@ -66,7 +66,7 @@ public class ControllerTest {
 	}
 
 	@Test
-	void testGetText() {
+	public void testGetText() {
 		String actual = restTemplate.getForObject("http://localhost:" + port
 				+ "/text?url=https%3A%2F%2Fwww.reddit.com%2Fr%2Fhelp%2Fcomments%2F6lqm79%2Fis_there_a_way_to_determine_my_total_post_count%2Fdk9nqro%2F",
 				String.class);
