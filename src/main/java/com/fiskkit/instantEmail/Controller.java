@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -185,6 +186,16 @@ public class Controller {
 			e.printStackTrace();
 		}
 		return new ResponseEntity<String>("failed", HttpStatus.CONFLICT);
+	}
+
+	@RequestMapping(value = "/url", method = RequestMethod.GET)
+	public ResponseEntity<Boolean> isUrl(@RequestParam(name = "url") String loc) {
+		try {
+			new URL(loc);
+		} catch (MalformedURLException e) {
+			return new ResponseEntity<Boolean>(Boolean.FALSE, HttpStatus.OK);
+		}
+		return new ResponseEntity<Boolean>(Boolean.TRUE, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/readability", method = RequestMethod.POST)
