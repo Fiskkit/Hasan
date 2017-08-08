@@ -42,6 +42,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -55,6 +56,11 @@ import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.process.PTBTokenizer;
 import edu.stanford.nlp.process.Tokenizer;
 
+import twitter4j.Status;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+
 @RestController
 @Component
 public class Controller {
@@ -64,10 +70,10 @@ public class Controller {
 	@Autowired
 	UserRepository repository;
 
-	@Value("${chargebee.applicationEnvironment}")
+	@Value(value="${chargebee.applicationEnvironment}")
 	String chargebeeEnvironment;
 
-	@Value("${chargebee.applicationSecret}")
+	@Value(value="${chargebee.applicationSecret}")
 	String chargebeeSecret;
 
 	@RequestMapping(value = "/valid", method = RequestMethod.GET)
@@ -276,6 +282,18 @@ public class Controller {
 		}
 		return new ResponseEntity<Map<String, Set<String>>>(map, HttpStatus.OK);
 	}
+
+  @RequestMapping(value = "/tweet/{article}", method=RequestMethod.GET)
+  public ResponseEntity<Void> notifyTweet(@PathVariable String article) {
+    String tweet = "New comment posted on "+article+".";
+    Twitter twitter = new TwitterFactory().getInstance();
+    try {
+      Status status = twitter.updateStatus(tweet);
+      return new ResponseEntity<>(null, HttpStatus.OK);
+    } catch (TwitterException e) {
+      return new ResponseEntity(null, HttpStatus.INTERNAL_SERVER_ERROR); // FIXME there is probably a better status to return
+    }
+  }
 
 	@RequestMapping(value = "/text", method = RequestMethod.GET)
 	public ResponseEntity<String> getText(@RequestParam(name = "uri") String uri) {

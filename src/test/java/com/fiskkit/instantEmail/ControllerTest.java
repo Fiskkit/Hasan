@@ -9,6 +9,7 @@ import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -28,6 +29,19 @@ public class ControllerTest {
 	@Autowired
 	private TestRestTemplate restTemplate;
 
+  @Value(value = "$(test.twitter.key)")
+  String twitterKey;
+
+  @Value(value="${test.twitter.secret)")
+  String twitterSecret;
+
+  @Test
+  public void sendTweet() throws Exception {
+    System.err.println(twitterKey);
+    System.err.println(twitterSecret);
+    assertThat(twitterKey != null);
+  }
+
 	@Test
 	public void isCreatedProperly() throws Exception {
 		assertThat(controller).isNotNull();
@@ -37,7 +51,6 @@ public class ControllerTest {
 	public void userValidTest() {
 		assertThat((restTemplate.getForObject("http://localhost:" + port + "/valid?subscription=1sjs9hvQ5tmUbX2I1Z",
 				String.class) == "true"));
-
 	}
 
 	@Test
