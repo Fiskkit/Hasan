@@ -2,12 +2,17 @@ package com.fiskkit.instantEmail;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.awt.HeadlessException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.JOptionPane;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,18 +20,33 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import twitter4j.Status;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 
 public class ControllerTest {
 	@Autowired
-	Controller controller;
+	FiskController controller;
 
+	private static Logger LOG = LoggerFactory.getLogger(ControllerTest.class);
 	@LocalServerPort
 	private int port;
 
 	@Autowired
 	private TestRestTemplate restTemplate;
+
+	@Test
+	public void twitter() throws Exception {
+		restTemplate.getForObject("http://localhost" + port + "/tweet/Ubgz4zDZvR", Status.class);
+		try {
+			JOptionPane.showMessageDialog(null,
+					"Now check https://twitter.com/allfisks for the notification to @hdiwan");
+		} catch (HeadlessException e) {
+			LOG.warn("Now check https://twitter.com/allfisks for the notification to @hdiwan");
+		}
+		assertThat(1);
+	}
 
 	@Test
 	public void isCreatedProperly() throws Exception {

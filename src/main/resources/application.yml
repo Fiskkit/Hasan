@@ -13,7 +13,7 @@ spring:
       root: ALL
 
 flyway:
-  enabled: true # Enable flyway.
+  enabled: true 
   locations: ""
   baselineOnMigrate: true
 
@@ -25,3 +25,6 @@ server:
   compression: 
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain
+
+fiskkit:
+  tweetMessage: There's a new Fisk posted for "$article", $twitterScreenname

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -18,17 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.chargebee.Environment;
-import com.chargebee.models.Subscription;
-import com.fiskkit.instantEmail.models.User;
-import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultiset;
-import com.google.gson.Gson;
-import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,11 +32,25 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.chargebee.Environment;
+import com.chargebee.models.Subscription;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fiskkit.instantEmail.models.User;
+import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultiset;
+import com.google.gson.Gson;
+import com.squareup.okhttp.HttpUrl;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
 import edu.stanford.nlp.ie.crf.CRFClassifier;
 import edu.stanford.nlp.ling.CoreAnnotations;
@@ -54,11 +58,18 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.process.PTBTokenizer;
 import edu.stanford.nlp.process.Tokenizer;
+import twitter4j.Status;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.auth.AccessToken;
+import twitter4j.auth.RequestToken;
 
+@Controller
 @RestController
 @Component
-public class Controller {
-	private static Logger logger = LoggerFactory.getLogger(Controller.class);
+public class FiskController {
+	private static Logger logger = LoggerFactory.getLogger(FiskController.class);
 	private static OkHttpClient client = new OkHttpClient();
 
 	@Autowired
@@ -69,6 +80,96 @@ public class Controller {
 
 	@Value("${chargebee.applicationSecret}")
 	String chargebeeSecret;
+	@Value("${fiskkit.tweetMessage}")
+	String TWITTER_MESSAGE;
+
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/tweet/{article}", method = RequestMethod.GET)
+	public ResponseEntity<String> tweet(@PathVariable String article) {
+
+		Twitter twitter = new TwitterFactory().getInstance();
+		try {
+			// get request token.
+			// this will throw IllegalStateException if access token is already available
+			RequestToken requestToken = twitter.getOAuthRequestToken(System.getProperty("oauth.accessToken"));
+			logger.debug("Request token: " + requestToken.getToken());
+			logger.debug("Request token secret: " + requestToken.getTokenSecret());
+
+			AccessToken accessToken = twitter.getOAuthAccessToken();
+
+			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+			while (null == accessToken) {
+				logger.debug("Open the following URL and grant access to your account:");
+				logger.debug(requestToken.getAuthorizationURL());
+				System.out.print("Enter the PIN(if available) and hit enter after you granted access.[PIN]:");
+				String pin = br.readLine();
+				try {
+					if (pin.length() > 0) {
+						accessToken = twitter.getOAuthAccessToken(requestToken, pin);
+					} else {
+						accessToken = twitter.getOAuthAccessToken(requestToken);
+					}
+				} catch (TwitterException te) {
+					if (401 == te.getStatusCode()) {
+						logger.error("Unable to get the access token.", te);
+					} else {
+					}
+				}
+			}
+			logger.debug("Access token: " + accessToken.getToken());
+			logger.debug("Access token secret: " + accessToken.getTokenSecret());
+		} catch (IllegalStateException ie) {
+			// access token is already available, or consumer key/secret is not set.
+			if (!twitter.getAuthorization().isEnabled()) {
+				logger.error("OAuth consumer key/secret is not set.", ie);
+				return new ResponseEntity<>("", HttpStatus.UNAUTHORIZED);
+			}
+		} catch (TwitterException e) {
+			logger.error(e.getMessage(), e);
+		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
+		}
+		try {
+			twitter.getOAuthRequestToken();
+		} catch (TwitterException e1) {
+			logger.error(e1.getMessage(), e1);
+		} catch (IllegalStateException e) {
+		}
+		if (!twitter.getAuthorization().isEnabled()) {
+			logger.warn("OAuth consumer key/secret is not set.");
+			return new ResponseEntity<>("", HttpStatus.UNAUTHORIZED);
+		}
+		String apiUrl = "http://fiskkit-dev-2014-11.elasticbeanstalk.com/api/v1/articles/" + article;
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Map<String, String>> jsonResponse = null;
+		try {
+			// FIXME fix generic type warning
+			jsonResponse = mapper.readValue(new URL(apiUrl), Map.class); 
+		} catch (IOException e1) {
+			logger.warn(e1.getMessage(), e1);
+		}
+		StringWriter out = new StringWriter();
+		Map<String, String> articleMapping = (Map<String, String>) jsonResponse.get("article");
+		try {
+			mapper.writeValue(out, articleMapping);
+		} catch (IOException e1) {
+			logger.warn(e1.getMessage(), e1);
+		}
+		String title = articleMapping.get("title");
+		String source = articleMapping.get("author_twitter");
+		if (source == null) {
+			source = "hdiwan";
+		}
+		String message = TWITTER_MESSAGE.replace("$article", title).replace("$twitterScreenname",
+				"@" + source);
+		Status status = null;
+		try {
+			status = twitter.updateStatus(message);
+		} catch (TwitterException e) {
+			logger.warn(e.getMessage(), e);
+		}
+		return new ResponseEntity<String>(status.getText(), HttpStatus.OK);
+	}
 
 	@RequestMapping(value = "/valid", method = RequestMethod.GET)
 	public ResponseEntity<Boolean> getBalance(@RequestParam(name = "subscription") String subscriptionId) {
@@ -78,8 +179,6 @@ public class Controller {
 			Subscription.retrieve(subscriptionId).request().subscription().status();
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
-
 			return new ResponseEntity<Boolean>(Boolean.FALSE, HttpStatus.FAILED_DEPENDENCY);
 		}
 
@@ -141,21 +240,18 @@ public class Controller {
 			json = new JSONObject(rawBody);
 		} catch (JSONException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 		String customerId = null;
 		try {
 			customerId = json.getJSONObject("content").getJSONObject("customer").getString("id");
 		} catch (JSONException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 		String customerFirstName = null;
 		try {
 			customerFirstName = json.getJSONObject("content").getJSONObject("customer").getString("first_name");
 		} catch (JSONException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 		String customerLastName = null;
 		try {
@@ -183,7 +279,6 @@ public class Controller {
 			}
 		} catch (JSONException | IOException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 		return new ResponseEntity<String>("failed", HttpStatus.CONFLICT);
 	}
