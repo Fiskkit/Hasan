@@ -2,64 +2,43 @@ package com.fiskkit.instantEmail;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.awt.HeadlessException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import javax.swing.JOptionPane;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import twitter4j.Status;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 
 public class ControllerTest {
+	@SuppressWarnings("unused")
+	private static Logger LOG = LoggerFactory.getLogger(ControllerTest.class);
+
 	@Autowired
 	FiskController controller;
 
-	private static Logger LOG = LoggerFactory.getLogger(ControllerTest.class);
 	@LocalServerPort
 	private int port;
 
 	@Autowired
 	private TestRestTemplate restTemplate;
 
-  @Value(value = "$(test.twitter.key)")
-  String twitterKey;
-
-  @Value(value="${test.twitter.secret)")
-  String twitterSecret;
-
-  @Test
-  public void sendTweet() throws Exception {
-    System.err.println(twitterKey);
-    System.err.println(twitterSecret);
-    assertThat(twitterKey != null);
-  }
-
 	@Test
 	public void twitter() throws Exception {
-		restTemplate.getForObject("http://localhost" + port + "/tweet/Ubgz4zDZvR", Status.class);
-		try {
-			JOptionPane.showMessageDialog(null,
-					"Now check https://twitter.com/allfisks for the notification to @hdiwan");
-		} catch (HeadlessException e) {
-			LOG.warn("Now check https://twitter.com/allfisks for the notification to @hdiwan");
-		}
-		assertThat(1);
+		ResponseEntity response = (ResponseEntity) restTemplate
+				.getForObject("http://localhost" + port + "/tweet/Ubgz4zDZvR", ResponseEntity.class);
+		assertThat(response.getStatusCodeValue() == 200);
 	}
 
 	@Test

@@ -166,6 +166,9 @@ public class FiskController {
 		try {
 			status = twitter.updateStatus(message);
 		} catch (TwitterException e) {
+			if (e.getMessage().contains("Status is a duplicate")) {
+				return new ResponseEntity<String>("OK", HttpStatus.OK);
+			}
 			logger.warn(e.getMessage(), e);
 		}
 		return new ResponseEntity<String>(status.getText(), HttpStatus.OK);
@@ -181,7 +184,6 @@ public class FiskController {
 			logger.error(e.getMessage(), e);
 			return new ResponseEntity<Boolean>(Boolean.FALSE, HttpStatus.FAILED_DEPENDENCY);
 		}
-
 		return new ResponseEntity<Boolean>(Boolean.TRUE, HttpStatus.OK);
 	}
 
