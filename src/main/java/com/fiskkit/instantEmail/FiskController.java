@@ -141,7 +141,7 @@ public class FiskController {
 			logger.warn("OAuth consumer key/secret is not set.");
 			return new ResponseEntity<>("", HttpStatus.UNAUTHORIZED);
 		}
-		String pieceTitle = null, source = null;
+		String source = null;
 		try {
 			Connection conn = DriverManager.getConnection("jdbc:mysql://aa106w2ihlwnfld.cwblf8lajcuh.us-west-1.rds.amazonaws.com/ebdb?user=root&password=Dylp-Oid-yUl-e&ssl=true");
 			PreparedStatement prepped = conn.prepareStatement("select a.author_twitter,a.title,f.created_at,article_id,a.id from fisks f join articles a on article_id = a.id where a.title = ?");
@@ -149,7 +149,6 @@ public class FiskController {
 			logger.info("About to execute "+prepped.toString());
 			ResultSet articleMapping = prepped.executeQuery();
 			articleMapping.next();
-			pieceTitle = articleMapping.getString("title");
 			source = articleMapping.getString("author_twitter");
 		} catch (SQLException e1) {
 			logger.warn(e1.getMessage(), e1);
