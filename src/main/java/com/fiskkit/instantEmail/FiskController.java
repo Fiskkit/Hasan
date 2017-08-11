@@ -4,12 +4,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,7 +47,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.chargebee.Environment;
 import com.chargebee.models.Subscription;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fiskkit.instantEmail.models.User;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultiset;
@@ -83,10 +87,8 @@ public class FiskController {
 	@Value("${fiskkit.tweetMessage}")
 	String TWITTER_MESSAGE;
 
-	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/tweet/{article}", method = RequestMethod.GET)
-	public ResponseEntity<String> tweet(@PathVariable String article) {
-
+	public ResponseEntity<String> tweet(@PathVariable String article, @RequestParam(name="title") String title) {
 		Twitter twitter = new TwitterFactory().getInstance();
 		try {
 			// get request token.
@@ -139,36 +141,35 @@ public class FiskController {
 			logger.warn("OAuth consumer key/secret is not set.");
 			return new ResponseEntity<>("", HttpStatus.UNAUTHORIZED);
 		}
-		String apiUrl = "http://fiskkit-dev-2014-11.elasticbeanstalk.com/api/v1/articles/" + article;
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String, Map<String, String>> jsonResponse = null;
+		String pieceTitle = null, source = null;
 		try {
-			// FIXME fix generic type warning
-			jsonResponse = mapper.readValue(new URL(apiUrl), Map.class); 
-		} catch (IOException e1) {
+			Connection conn = DriverManager.getConnection("jdbc:mysql://aa106w2ihlwnfld.cwblf8lajcuh.us-west-1.rds.amazonaws.com/ebdb?user=root&password=Dylp-Oid-yUl-e&ssl=true");
+			PreparedStatement prepped = conn.prepareStatement("select a.author_twitter,a.title,f.created_at,article_id,a.id from fisks f join articles a on article_id = a.id where a.title = ?");
+			prepped.setString(1, title);
+			logger.info("About to execute "+prepped.toString());
+			ResultSet articleMapping = prepped.executeQuery();
+			articleMapping.next();
+			pieceTitle = articleMapping.getString("title");
+			source = articleMapping.getString("author_twitter");
+		} catch (SQLException e1) {
 			logger.warn(e1.getMessage(), e1);
 		}
-		StringWriter out = new StringWriter();
-		Map<String, String> articleMapping = (Map<String, String>) jsonResponse.get("article");
-		try {
-			mapper.writeValue(out, articleMapping);
-		} catch (IOException e1) {
-			logger.warn(e1.getMessage(), e1);
-		}
-		String title = articleMapping.get("title");
-		String source = articleMapping.get("author_twitter");
+		
 		if (source == null) {
 			source = "hdiwan";
 		}
-		String message = TWITTER_MESSAGE.replace("$article", title).replace("$twitterScreenname",
-				"@" + source);
+		SecureRandom sRandom = new SecureRandom();
+		byte[] randomBytes = new byte[4];
+		sRandom.nextBytes(randomBytes);
+		String randomString = randomBytes.toString().replaceAll("@", "");
+		logger.info(randomString);
+		String message = TWITTER_MESSAGE.replace("$twitterScreenname",
+				"@" + source).replace("$link", String.format("http://fiskkit.com/articles/%s/fisk/discuss", article)).replace("$random", randomString);
+		logger.info("About to tweet "+message);
 		Status status = null;
 		try {
 			status = twitter.updateStatus(message);
 		} catch (TwitterException e) {
-			if (e.getMessage().contains("Status is a duplicate")) {
-				return new ResponseEntity<String>("OK", HttpStatus.OK);
-			}
 			logger.warn(e.getMessage(), e);
 		}
 		return new ResponseEntity<String>(status.getText(), HttpStatus.OK);

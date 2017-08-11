@@ -27,4 +27,4 @@ server:
     mime-types: application/json,application/xml,text/html,text/xml,text/plain
 
 fiskkit:
-  tweetMessage: Read the new fisk of "$article", $twitterScreenname
+  tweetMessage: Read the new fisk -- $link&random=$random, $twitterScreenname 

@@ -36,9 +36,9 @@ public class ControllerTest {
 
 	@Test
 	public void twitter() throws Exception {
-		ResponseEntity response = (ResponseEntity) restTemplate
-				.getForObject("http://localhost" + port + "/tweet/Ubgz4zDZvR", ResponseEntity.class);
-		assertThat(response.getStatusCodeValue() == 200);
+		String response = restTemplate
+				.getForObject("http://localhost" + port + "/tweet/o8mbC8sJhC/?title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google", String.class);
+		assertThat(response.endsWith("@hdiwan"));
 	}
 
 	@Test
