@@ -124,7 +124,7 @@ public class FiskController {
 			// access token is already available, or consumer key/secret is not set.
 			if (!twitter.getAuthorization().isEnabled()) {
 				logger.error("OAuth consumer key/secret is not set.", ie);
-				return new ResponseEntity<>("", HttpStatus.UNAUTHORIZED);
+				return new ResponseEntity<>("Oauth authentication error, make sure your key/secret are correct in twitter4j.properties", HttpStatus.UNAUTHORIZED);
 			}
 		} catch (TwitterException e) {
 			logger.error(e.getMessage(), e);
