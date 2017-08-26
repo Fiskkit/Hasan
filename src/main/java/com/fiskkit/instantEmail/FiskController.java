@@ -62,6 +62,9 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.process.PTBTokenizer;
 import edu.stanford.nlp.process.Tokenizer;
+import facebook4j.Facebook;
+import facebook4j.FacebookException;
+import facebook4j.FacebookFactory;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -84,11 +87,12 @@ public class FiskController {
 
 	@Value("${chargebee.applicationSecret}")
 	String chargebeeSecret;
+
 	@Value("${fiskkit.tweetMessage}")
 	String TWITTER_MESSAGE;
 
 	@RequestMapping(value = "/tweet/{article}", method = RequestMethod.GET)
-	public ResponseEntity<String> tweet(@PathVariable String article, @RequestParam(name="title") String title) {
+	public ResponseEntity<String> tweet(@PathVariable String article, @RequestParam(name = "title") String title) {
 		Twitter twitter = new TwitterFactory().getInstance();
 		try {
 			// get request token.
@@ -124,7 +128,9 @@ public class FiskController {
 			// access token is already available, or consumer key/secret is not set.
 			if (!twitter.getAuthorization().isEnabled()) {
 				logger.error("OAuth consumer key/secret is not set.", ie);
-				return new ResponseEntity<>("Oauth authentication error, make sure your key/secret are correct in twitter4j.properties", HttpStatus.UNAUTHORIZED);
+				return new ResponseEntity<>(
+						"Oauth authentication error, make sure your key/secret are correct in twitter4j.properties",
+						HttpStatus.UNAUTHORIZED);
 			}
 		} catch (TwitterException e) {
 			logger.error(e.getMessage(), e);
@@ -143,17 +149,19 @@ public class FiskController {
 		}
 		String source = null;
 		try {
-			Connection conn = DriverManager.getConnection("jdbc:mysql://aa106w2ihlwnfld.cwblf8lajcuh.us-west-1.rds.amazonaws.com/ebdb?user=root&password=Dylp-Oid-yUl-e&ssl=true");
-			PreparedStatement prepped = conn.prepareStatement("select a.author_twitter,a.title,f.created_at,article_id,a.id from fisks f join articles a on article_id = a.id where a.title = ?");
+			Connection conn = DriverManager.getConnection(
+					"jdbc:mysql://aa106w2ihlwnfld.cwblf8lajcuh.us-west-1.rds.amazonaws.com/ebdb?user=root&password=Dylp-Oid-yUl-e&ssl=true");
+			PreparedStatement prepped = conn.prepareStatement(
+					"select a.author_twitter,a.title,f.created_at,article_id,a.id from fisks f join articles a on article_id = a.id where a.title = ?");
 			prepped.setString(1, title);
-			logger.info("About to execute "+prepped.toString());
+			logger.info("About to execute " + prepped.toString());
 			ResultSet articleMapping = prepped.executeQuery();
 			articleMapping.next();
 			source = articleMapping.getString("author_twitter");
 		} catch (SQLException e1) {
 			logger.warn(e1.getMessage(), e1);
 		}
-		
+
 		if (source == null) {
 			source = "hdiwan";
 		}
@@ -162,16 +170,34 @@ public class FiskController {
 		sRandom.nextBytes(randomBytes);
 		String randomString = randomBytes.toString().replaceAll("@", "");
 		logger.info(randomString);
-		String message = TWITTER_MESSAGE.replace("$twitterScreenname",
-				"@" + source).replace("$link", String.format("http://fiskkit.com/articles/%s/fisk/discuss", article)).replace("$random", randomString);
-		logger.info("About to tweet "+message);
+		String message = TWITTER_MESSAGE.replace("$twitterScreenname", "@" + source)
+				.replace("$link", String.format("http://fiskkit.com/articles/%s/fisk/discuss", article))
+				.replace("$random", randomString);
+		logger.info("About to tweet " + message);
 		Status status = null;
 		try {
 			status = twitter.updateStatus(message);
 		} catch (TwitterException e) {
 			logger.warn(e.getMessage(), e);
 		}
+
 		return new ResponseEntity<String>(status.getText(), HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/facebook", method = RequestMethod.GET)
+	public ResponseEntity<Boolean> facebook(@RequestParam(name = "title") String article) {
+		Facebook facebook = new FacebookFactory().getInstance();
+		String message = TWITTER_MESSAGE.replace("$twitterScreenname", "")
+				.replace("$link", String.format("http://fiskkit.com/articles/%s/fisk/discuss", article))
+				.replace("$random", "1");
+		try {
+			facebook.postStatusMessage(message);
+		} catch (FacebookException e) {
+			logger.error(e.getClass().getName() + " caught, stacktrace to follow");
+			logger.info(e.getMessage(), e);
+			return new ResponseEntity<Boolean>(Boolean.FALSE, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return new ResponseEntity<Boolean>(Boolean.TRUE, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/valid", method = RequestMethod.GET)
