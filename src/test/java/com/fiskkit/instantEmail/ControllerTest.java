@@ -36,8 +36,14 @@ public class ControllerTest {
 	@Test
 	public void twitter() throws Exception {
 		String response = restTemplate
-				.getForObject("http://localhost" + port + "/tweet/o8mbC8sJhC/?title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google", String.class);
+				.getForObject("http://localhost:" + port + "/tweet/o8mbC8sJhC/?title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google", String.class);
 		assertThat(response.endsWith("@hdiwan"));
+	}
+	
+	@Test
+	public void facebook() throws Exception {
+		Boolean response = restTemplate.getForObject("http://localhost:"+port+"/facebook?title=title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google", Boolean.class);
+		assertThat((response.booleanValue() == true) || (response.booleanValue() == false));
 	}
 
 	@Test
