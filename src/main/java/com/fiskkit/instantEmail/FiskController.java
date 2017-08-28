@@ -185,8 +185,22 @@ public class FiskController {
 	}
 
 	@RequestMapping(value = "/facebook", method = RequestMethod.GET)
-	public ResponseEntity<Boolean> facebook(@RequestParam(name = "title") String article) {
-		Facebook facebook = new FacebookFactory().getInstance();
+	public ResponseEntity<Boolean> facebook(@RequestParam(name = "title") String article, @RequestParam(name="email") String email) {
+		String fbToken = null;
+		try {
+			Connection conn = DriverManager.getConnection(
+					"jdbc:mysql://aa106w2ihlwnfld.cwblf8lajcuh.us-west-1.rds.amazonaws.com/ebdb?user=root&password=Dylp-Oid-yUl-e&ssl=true");
+			PreparedStatement prepped = conn
+					.prepareStatement("select facebook_session_token from users where email = ?");
+			prepped.setString(1, email);
+			ResultSet results = prepped.executeQuery();
+			results.next();
+			fbToken = results.getString(1);
+		} catch (SQLException e1) {
+			logger.error(e1.getClass().getName() + " caught, stacktrace to follow");
+			logger.info(e1.getMessage(), e1);
+		}
+		Facebook facebook = new FacebookFactory().getInstance(new facebook4j.auth.AccessToken(fbToken));
 		String message = TWITTER_MESSAGE.replace("$twitterScreenname", "")
 				.replace("$link", String.format("http://fiskkit.com/articles/%s/fisk/discuss", article))
 				.replace("$random", "1");
