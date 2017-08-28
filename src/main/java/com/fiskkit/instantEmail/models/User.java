@@ -24,6 +24,9 @@ public class User {
 	@Column
 	String chargebeeId;
 
+	@Column(nullable = false) 
+	String facebookToken;
+	
 	@Column(nullable = false)
 	LocalDateTime addedAt = LocalDateTime.now();
 
@@ -88,6 +91,14 @@ public class User {
 	@Override
 	public String toString() {
 		return "[User: " + getId().toString() + " {phpId: " + getPhpId() + ", chargebeeId: " + getChargebeeId();
+	}
+
+	public String getFacebookToken() {
+		return facebookToken;
+	}
+
+	public void setFacebookToken(String facebookToken) {
+		this.facebookToken = facebookToken;
 	}
 
 }
