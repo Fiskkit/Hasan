@@ -1,6 +1,9 @@
 package com.fiskkit.instantEmail;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -15,6 +18,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +34,7 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 
+import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,6 +47,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,7 +65,9 @@ import com.fiskkit.instantEmail.models.User;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultiset;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.squareup.okhttp.HttpUrl;
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -83,9 +92,10 @@ import twitter4j.auth.RequestToken;
 @RestController
 @Component
 public class FiskController {
-	private static Logger logger = LoggerFactory.getLogger(FiskController.class);
+	private static final Logger logger = LoggerFactory.getLogger(FiskController.class);
 	private static OkHttpClient client = new OkHttpClient();
-
+	public static final String SENTENCE_LOCATION_KEY = "com.fiskkit.instantEmail.SentenceTokenizer";
+	private static File binFile;
 	@Autowired
 	UserRepository repository;
 
@@ -447,10 +457,63 @@ public class FiskController {
 			text = response.body().string();
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 		Document soup = Jsoup.parse(text);
 		return new ResponseEntity<>(soup.text(), HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/phrases", method = RequestMethod.POST)
+	public ResponseEntity<List<String>> tokenize(@RequestBody String body,
+			@RequestParam(name = "id") String identitifier) {
+		// store the sentence tokenizer once per run
+		final List<String> returnValue = new ArrayList<>();
+		if (binFile == null) {
+			try {
+				binFile = File.createTempFile("en-sent", ".bin");
+			} catch (IOException e1) {
+				logger.error(e1.getClass().getName()+" caught, stacktrace to follow");
+				e1.printStackTrace();
+			}
+			String url = "http://opennlp.sourceforge.net/models-1.5/en-sent.bin";
+			Request request = new Request.Builder().url(HttpUrl.parse(url)).build();
+			Response response = null;
+			try {
+				response = client.newCall(request).execute();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				logger.error(e1.getClass().getName()+" caught, stacktrace to follow");
+			}
+			try {
+				BufferedInputStream bis = new BufferedInputStream(response.body().byteStream());
+				IOUtils.copy(bis, new FileOutputStream(binFile));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				logger.error(e.getClass().getName()+" caught, stacktrace to follow");
+				logger.info(e.getStackTrace().toString());
+			}
+		}
+		System.setProperty(SENTENCE_LOCATION_KEY, binFile.getAbsolutePath());
+		try {
+			Request request = new Request.Builder().url("https://hd1-ner.herokuapp.com/phrases").post( com.squareup.okhttp.RequestBody.create(MediaType.parse("text/plain"), body)).build();
+			DriverManagerDataSource dataSource = new DriverManagerDataSource();
+			dataSource.setDriverClassName("jdbc:mysql://aa106w2ihlwnfld.cwblf8lajcuh.us-west-1.rds.amazonaws.com/ebdb?user=root");
+			dataSource.setPassword("Dylp-Oid-yUl-e");
+			dataSource.setUsername("root");
+			
+			JdbcTemplate updateTable = new JdbcTemplate(dataSource);
+			Response response = client.newCall(request).execute();
+			List<String> sentences = new Gson().fromJson(response.body().charStream(), new TypeToken<List<String>>() {}.getType());
+			for (String s : sentences) {
+				returnValue.add(s);
+				updateTable.update("INSERT INTO sentences (body, position, article_id) VALUES (?, ?, ?)", s,
+						sentences.indexOf(s), identitifier);
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+
+		return new ResponseEntity<>(returnValue, HttpStatus.OK);
 	}
 
 	@Bean

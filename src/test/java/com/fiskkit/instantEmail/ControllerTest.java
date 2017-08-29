@@ -1,11 +1,21 @@
 package com.fiskkit.instantEmail;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -35,14 +45,17 @@ public class ControllerTest {
 
 	@Test
 	public void twitter() throws Exception {
-		String response = restTemplate
-				.getForObject("http://localhost:" + port + "/tweet/o8mbC8sJhC/?title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google", String.class);
+		String response = restTemplate.getForObject("http://localhost:" + port
+				+ "/tweet/o8mbC8sJhC/?title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google",
+				String.class);
 		assertThat(response.endsWith("@hdiwan"));
 	}
-	
+
 	@Test
 	public void facebook() throws Exception {
-		Boolean response = restTemplate.getForObject("http://localhost:"+port+"/facebook?email=hasan.diwan@gmail.com&title=title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google", Boolean.class);
+		Boolean response = restTemplate.getForObject("http://localhost:" + port
+				+ "/facebook?email=hasan.diwan@gmail.com&title=title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google",
+				Boolean.class);
 		assertThat((response.booleanValue() == true) || (response.booleanValue() == false));
 	}
 
@@ -97,6 +110,66 @@ public class ControllerTest {
 				Boolean.class) == Boolean.FALSE);
 		assertThat(restTemplate.getForObject("http://localhost:" + port + "/url?url=http%3A%2F%2Fwww.google.co.uk%2F",
 				Boolean.class) == Boolean.TRUE);
+
+	}
+
+	private static String readUrl(String urlString) throws IOException {
+		String ret = null, line = null;
+		try {
+			URL url = new URL(urlString);
+			BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+			while ((line = reader.readLine()) != null) {
+				ret += line;
+			}
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			ret = null;
+		} 
+		return ret;
+	}
+
+	@Test
+	public void testPhrases() {
+		String URL = "https://www.reddit.com/r/Advice/comments/6wuflp/my_father_is_verbally_abusive_what_is_the_best/dmaxkt7/.json";
+
+		JSONObject json = null;
+		try {
+			json = new JSONObject(readUrl(URL));
+		} catch (JSONException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		int ourComment = 0;
+		JSONArray comments = null;
+		try {
+			comments = json.getJSONObject("data").getJSONArray("children").getJSONObject(0).getJSONArray("data");
+		} catch (JSONException e) {
+			fail(e.getMessage());
+		}
+		for (int c = 0; c != comments.length(); c++) {
+			JSONObject comment;
+			try {
+				comment = comments.getJSONObject(c);
+				if (comment.getString("author").equals("cruyff8")) {
+					ourComment = c;
+					break;
+				}
+			} catch (JSONException e) {
+				fail(e.getMessage());
+			}
+		}
+		String commentBody = null;
+		try {
+			commentBody = comments.getJSONObject(ourComment).getString("body");
+		} catch (JSONException e) {
+			fail(e.getMessage());
+		}
+		commentBody = commentBody.replaceAll("\\n", "");
+		@SuppressWarnings("unchecked")
+		List<String> phrases = restTemplate.postForObject("http://localhost:" + port + "/phrases", commentBody,
+				List.class);
+		assertThat(phrases.toArray()[0].equals("No, you don't deserve it."));
 
 	}
 }
