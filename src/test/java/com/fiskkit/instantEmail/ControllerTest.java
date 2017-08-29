@@ -169,7 +169,7 @@ public class ControllerTest {
 		@SuppressWarnings("unchecked")
 		List<String> phrases = restTemplate.postForObject("http://localhost:" + port + "/phrases", commentBody,
 				List.class);
-		assertThat(phrases.toArray()[0].equals("No, you don't deserve it."));
+		assertThat(phrases.get(0).equals("No, you don't deserve it."));
 
 	}
 }
