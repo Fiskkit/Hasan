@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Persistence;
@@ -38,7 +37,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.tomcat.util.codec.binary.Base64;
-import org.joda.time.DateTime;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -451,12 +449,8 @@ public class FiskController {
 
 	@RequestMapping(value = "/hash", method = RequestMethod.GET)
 	public ResponseEntity<Boolean> hash(@RequestParam(name = "uri") String uri) {
-		HttpUrl.Builder urlBuilder = HttpUrl.parse("http://api.diffbot.com/v3/article").newBuilder();
-		urlBuilder.addQueryParameter("uri", uri);
-		urlBuilder.addQueryParameter("diffbotToken", "70-57-12-40-13-f-50-5a-40-16-23-5a-44-a-9-a-45-10-76-5c-43-44-c-4a-58-4c-d-5e-b-44-2-54");
-		String url = urlBuilder.build().toString();
-		Request request = new Request.Builder().url(url).build();
-		logger.debug(url + "<=== our complete diffbot request URL");
+		Request request = new Request.Builder().url(uri).build();
+		logger.debug(uri + "<=== our complete diffbot request URL");
 		Response response = null;
 		try {
 			response = client.newCall(request).execute();

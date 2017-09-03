@@ -11,6 +11,7 @@ import org.joda.time.DateTime;
 @Entity
 public class Seen {
 	@Id
+	@Column(unique=true)
 	String hash;
 
 	@Column
