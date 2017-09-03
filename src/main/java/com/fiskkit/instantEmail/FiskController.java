@@ -98,15 +98,18 @@ import twitter4j.auth.RequestToken;
 public class FiskController {
 	private static final Logger logger = LoggerFactory.getLogger(FiskController.class);
 	private static OkHttpClient client = new OkHttpClient();
+
 	public static final String SENTENCE_LOCATION_KEY = "com.fiskkit.instantEmail.SentenceTokenizer";
+	
 	@Value(" fiskkit.diffbotKey")
 	public static String DIFFBOT_KEY;
 	private static File binFile;
+	
 	@Autowired
 	UserRepository repository;
 
 	@Autowired
-	CrudRepository<Seen, String> seenRepository;
+	SeenRepository seenRepository;
 
 	@Value("${chargebee.applicationEnvironment}")
 	String chargebeeEnvironment;
@@ -560,8 +563,12 @@ public class FiskController {
 	}
 
 	@Bean
-	public UserRepository getRepo() {
+	public UserRepository getUserRepo() {
 		return repository;
 	}
-
+	
+	@Bean
+	public SeenRepository getSeenRepo() { 
+		return seenRepository; 
+	}
 }
