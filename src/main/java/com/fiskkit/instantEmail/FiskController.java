@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -107,7 +108,7 @@ public class FiskController {
 	UserRepository repository;
 
 	@Autowired
-	SeenRepository seenRepository;
+	CrudRepository<Seen, String> seenRepository;
 
 	@Value("${chargebee.applicationEnvironment}")
 	String chargebeeEnvironment;
@@ -465,27 +466,19 @@ public class FiskController {
 		}
 		String text = null;
 		try {
-			String fromDiffbot = response.body().string();
-			text = new JSONObject(fromDiffbot).getJSONObject("objects").getString("text");
+			text = response.body().string();
 		} catch (IOException e) {
 			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
 			e.printStackTrace();
-		} catch (JSONException e) {
-			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
-			e.printStackTrace();
 		}
-
+		
 		String hash = new Base64().encodeToString(DigestUtils.sha1(text));
-		Set<Seen> allHashes = StreamSupport.stream(seenRepository.findAll().spliterator(), false)
-				.filter(w -> w.getAddedAt().isAfter(new DateTime().minusDays(3))).collect(Collectors.toSet());
+		
 		Seen newest = new Seen();
 		newest.setHash(hash);
-		if (!allHashes.contains(newest)) {
-			seenRepository.save(newest);
-			return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
-		} else {
-			return new ResponseEntity<>(true, HttpStatus.FOUND);
-		}
+		boolean ret = seenRepository.exists(hash);
+		if (!ret) seenRepository.save(newest);
+		return new ResponseEntity<>(ret, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/text", method = RequestMethod.GET)
