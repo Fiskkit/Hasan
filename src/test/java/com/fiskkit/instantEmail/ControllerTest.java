@@ -77,7 +77,7 @@ public class ControllerTest {
 	}
 
 	@Test
-	public void hashTest() {
+	public void testHash() {
 		assertThat(restTemplate.getForObject("http://localhost:"+port+"/hash?url=http%3A%2F%2Fwww.purple.com", Boolean.class).equals(Boolean.FALSE));
 		assertThat(restTemplate.getForObject("http://localhost:"+port+"/hash?url=http%3A%2F%2Fwww.purple.com", Boolean.class).equals(Boolean.TRUE));
 	}
