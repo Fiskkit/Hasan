@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Persistence;
@@ -34,7 +35,10 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.tomcat.util.codec.binary.Base64;
+import org.joda.time.DateTime;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,6 +65,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.chargebee.Environment;
 import com.chargebee.models.Subscription;
 import com.fiskkit.instantEmail.models.FacebookPermissions;
+import com.fiskkit.instantEmail.models.Seen;
 import com.fiskkit.instantEmail.models.User;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultiset;
@@ -95,9 +100,14 @@ public class FiskController {
 	private static final Logger logger = LoggerFactory.getLogger(FiskController.class);
 	private static OkHttpClient client = new OkHttpClient();
 	public static final String SENTENCE_LOCATION_KEY = "com.fiskkit.instantEmail.SentenceTokenizer";
+	@Value(" fiskkit.diffbotKey")
+	public static String DIFFBOT_KEY;
 	private static File binFile;
 	@Autowired
 	UserRepository repository;
+
+	@Autowired
+	SeenRepository seenRepository;
 
 	@Value("${chargebee.applicationEnvironment}")
 	String chargebeeEnvironment;
@@ -205,7 +215,7 @@ public class FiskController {
 	public ResponseEntity<Boolean> facebook(@RequestParam(name = "title") String article,
 			@RequestParam(name = "email") String email) {
 		String fbToken = null;
-		;
+
 		EntityManager em = Persistence.createEntityManagerFactory("FacebookPermissions").createEntityManager();
 		CriteriaBuilder cb = em.getCriteriaBuilder();
 		CriteriaQuery<FacebookPermissions> permitted = cb.createQuery(FacebookPermissions.class);
@@ -438,6 +448,46 @@ public class FiskController {
 		return new ResponseEntity<Map<String, Set<String>>>(map, HttpStatus.OK);
 	}
 
+	@RequestMapping(value = "/hash", method = RequestMethod.GET)
+	public ResponseEntity<Boolean> hash(@RequestParam(name = "uri") String uri) {
+		HttpUrl.Builder urlBuilder = HttpUrl.parse("http://api.diffbot.com/v3/article").newBuilder();
+		urlBuilder.addQueryParameter("uri", uri);
+		urlBuilder.addQueryParameter("diffbotToken", "70-57-12-40-13-f-50-5a-40-16-23-5a-44-a-9-a-45-10-76-5c-43-44-c-4a-58-4c-d-5e-b-44-2-54");
+		String url = urlBuilder.build().toString();
+		Request request = new Request.Builder().url(url).build();
+		logger.debug(url + "<=== our complete diffbot request URL");
+		Response response = null;
+		try {
+			response = client.newCall(request).execute();
+		} catch (IOException e1) {
+			logger.error(e1.getMessage(), e1);
+			e1.printStackTrace();
+		}
+		String text = null;
+		try {
+			String fromDiffbot = response.body().string();
+			text = new JSONObject(fromDiffbot).getJSONObject("objects").getString("text");
+		} catch (IOException e) {
+			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
+			e.printStackTrace();
+		} catch (JSONException e) {
+			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
+			e.printStackTrace();
+		}
+
+		String hash = new Base64().encodeToString(DigestUtils.sha1(text));
+		Set<Seen> allHashes = StreamSupport.stream(seenRepository.findAll().spliterator(), false)
+				.filter(w -> w.getAddedAt().isAfter(new DateTime().minusDays(3))).collect(Collectors.toSet());
+		Seen newest = new Seen();
+		newest.setHash(hash);
+		if (!allHashes.contains(newest)) {
+			seenRepository.save(newest);
+			return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+		} else {
+			return new ResponseEntity<>(true, HttpStatus.FOUND);
+		}
+	}
+
 	@RequestMapping(value = "/text", method = RequestMethod.GET)
 	public ResponseEntity<String> getText(@RequestParam(name = "uri") String uri) {
 		HttpUrl.Builder urlBuilder = HttpUrl.parse(uri).newBuilder();
@@ -471,7 +521,7 @@ public class FiskController {
 			try {
 				binFile = File.createTempFile("en-sent", ".bin");
 			} catch (IOException e1) {
-				logger.error(e1.getClass().getName()+" caught, stacktrace to follow");
+				logger.error(e1.getClass().getName() + " caught, stacktrace to follow", e1);
 				e1.printStackTrace();
 			}
 			String url = "http://opennlp.sourceforge.net/models-1.5/en-sent.bin";
@@ -481,29 +531,30 @@ public class FiskController {
 				response = client.newCall(request).execute();
 			} catch (IOException e1) {
 				e1.printStackTrace();
-				logger.error(e1.getClass().getName()+" caught, stacktrace to follow");
+				logger.error(e1.getClass().getName() + " caught, stacktrace to follow", e1);
 			}
 			try {
 				BufferedInputStream bis = new BufferedInputStream(response.body().byteStream());
 				IOUtils.copy(bis, new FileOutputStream(binFile));
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
-				logger.error(e.getClass().getName()+" caught, stacktrace to follow");
-				logger.info(e.getStackTrace().toString());
+				logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
 			}
 		}
 		System.setProperty(SENTENCE_LOCATION_KEY, binFile.getAbsolutePath());
 		try {
-			Request request = new Request.Builder().url("https://hd1-ner.herokuapp.com/phrases").post( com.squareup.okhttp.RequestBody.create(MediaType.parse("text/plain"), body)).build();
+			Request request = new Request.Builder().url("https://hd1-ner.herokuapp.com/phrases")
+					.post(com.squareup.okhttp.RequestBody.create(MediaType.parse("text/plain"), body)).build();
 			DriverManagerDataSource dataSource = new DriverManagerDataSource();
-			dataSource.setDriverClassName("jdbc:mysql://aa106w2ihlwnfld.cwblf8lajcuh.us-west-1.rds.amazonaws.com/ebdb?user=root");
+			dataSource.setDriverClassName(
+					"jdbc:mysql://aa106w2ihlwnfld.cwblf8lajcuh.us-west-1.rds.amazonaws.com/ebdb?user=root");
 			dataSource.setPassword("Dylp-Oid-yUl-e");
 			dataSource.setUsername("root");
-			
+
 			JdbcTemplate updateTable = new JdbcTemplate(dataSource);
 			Response response = client.newCall(request).execute();
-			List<String> sentences = new Gson().fromJson(response.body().charStream(), new TypeToken<List<String>>() {}.getType());
+			List<String> sentences = new Gson().fromJson(response.body().charStream(), new TypeToken<List<String>>() {
+			}.getType());
 			for (String s : sentences) {
 				returnValue.add(s);
 				updateTable.update("INSERT INTO sentences (body, position, article_id) VALUES (?, ?, ?)", s,

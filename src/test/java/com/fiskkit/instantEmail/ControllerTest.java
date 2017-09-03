@@ -77,6 +77,11 @@ public class ControllerTest {
 	}
 
 	@Test
+	public void hashTest() {
+		assertThat(restTemplate.getForObject("http://localhost:"+port+"/hash?url=http%3A%2F%2Fwww.purple.com", Boolean.class).equals(Boolean.FALSE));
+		assertThat(restTemplate.getForObject("http://localhost:"+port+"/hash?url=http%3A%2F%2Fwww.purple.com", Boolean.class).equals(Boolean.TRUE));
+	}
+	@Test
 	public void readabilityOfText() {
 		String text = "the quick brown fox jumped over the lazy dog.";
 		assertThat(restTemplate.postForObject("http://localhost:" + port + "/readability", text, Double.class) < 1.00);
