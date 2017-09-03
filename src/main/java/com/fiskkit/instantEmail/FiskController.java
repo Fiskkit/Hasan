@@ -451,7 +451,7 @@ public class FiskController {
 	}
 
 	@RequestMapping(value = "/hash", method = RequestMethod.GET)
-	public ResponseEntity<Boolean> hash(@RequestParam(name = "uri") String uri) {
+	public Boolean hash(@RequestParam(name = "uri") String uri) {
 		Request request = new Request.Builder().url(uri).build();
 		logger.debug(uri + "<=== our complete diffbot request URL");
 		Response response = null;
@@ -473,9 +473,10 @@ public class FiskController {
 		
 		Seen newest = new Seen();
 		newest.setHash(hash);
+		logger.info("seenRepository == null => "+ new Boolean(seenRepository == null).toString());
 		boolean ret = seenRepository.exists(hash);
 		if (!ret) seenRepository.save(newest);
-		return new ResponseEntity<>(ret, HttpStatus.OK);
+		return ret;
 	}
 
 	@RequestMapping(value = "/text", method = RequestMethod.GET)
