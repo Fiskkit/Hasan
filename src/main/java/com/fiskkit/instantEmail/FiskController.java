@@ -481,11 +481,9 @@ public class FiskController {
 				text = json.getJSONArray("objects").getJSONObject(0).getString("html");
 			}
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			logger.error(e.getClass().getName()+" caught, stacktrace to follow", e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			logger.error(e.getClass().getName()+" caught, stacktrace to follow", e);
 		}
