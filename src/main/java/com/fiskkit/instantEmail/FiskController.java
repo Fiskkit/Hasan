@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +37,7 @@ import javax.persistence.criteria.CriteriaQuery;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,7 +49,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -100,11 +101,11 @@ public class FiskController {
 	private static OkHttpClient client = new OkHttpClient();
 
 	public static final String SENTENCE_LOCATION_KEY = "com.fiskkit.instantEmail.SentenceTokenizer";
-	
+
 	@Value(" fiskkit.diffbotKey")
 	public static String DIFFBOT_KEY;
 	private static File binFile;
-	
+
 	@Autowired
 	UserRepository repository;
 
@@ -452,8 +453,17 @@ public class FiskController {
 
 	@RequestMapping(value = "/hash", method = RequestMethod.GET)
 	public Boolean hash(@RequestParam(name = "uri") String uri) {
-		Request request = new Request.Builder().url(uri).build();
-		logger.debug(uri + "<=== our complete diffbot request URL");
+		URIBuilder url = new URIBuilder().setHost("api.diffbot.com").setScheme("http")
+				.setPath("v3/article").addParameter("url", uri).addParameter("token", "38b9af7246e37abc105314c898d1ed0d");
+		
+		Request request = null;
+		try {
+			request = new Request.Builder().url(url.build().toASCIIString()).build();
+			logger.debug(url.build().toASCIIString() + "<=== our complete diffbot request URL");
+		} catch (URISyntaxException e2) {
+			logger.error(e2.getClass().getName() + " caught, stacktrace to follow", e2);
+		}
+
 		Response response = null;
 		try {
 			response = client.newCall(request).execute();
@@ -463,19 +473,30 @@ public class FiskController {
 		}
 		String text = null;
 		try {
-			text = response.body().string();
-		} catch (IOException e) {
-			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
+			String resp = response.body().string();
+			logger.info(resp);
+			JSONObject json = new JSONObject(resp);
+			text = json.getJSONArray("objects").getJSONObject(0).getString("text");
+			if (text == null) {
+				text = json.getJSONArray("objects").getJSONObject(0).getString("html");
+			}
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
+			logger.error(e.getClass().getName()+" caught, stacktrace to follow", e);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			logger.error(e.getClass().getName()+" caught, stacktrace to follow", e);
 		}
-		
 		String hash = new Base64().encodeToString(DigestUtils.sha1(text));
-		
+
 		Seen newest = new Seen();
 		newest.setHash(hash);
-		logger.info("seenRepository == null => "+ new Boolean(seenRepository == null).toString());
+		logger.info("seenRepository == null => " + new Boolean(seenRepository == null).toString());
 		boolean ret = seenRepository.exists(hash);
-		if (!ret) seenRepository.save(newest);
+		if (!ret)
+			seenRepository.save(newest);
 		return ret;
 	}
 
@@ -567,9 +588,9 @@ public class FiskController {
 	public UserRepository getUserRepo() {
 		return repository;
 	}
-	
+
 	@Bean
-	public SeenRepository getSeenRepo() { 
-		return seenRepository; 
+	public SeenRepository getSeenRepo() {
+		return seenRepository;
 	}
 }
