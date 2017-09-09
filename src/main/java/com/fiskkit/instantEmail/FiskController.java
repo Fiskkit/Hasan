@@ -492,9 +492,27 @@ public class FiskController {
 		Seen newest = new Seen();
 		newest.setHash(hash);
 		logger.info("seenRepository == null => " + new Boolean(seenRepository == null).toString());
-		boolean ret = seenRepository.exists(hash);
-		if (!ret)
+		Map <String, String>ret = new HashMap<>();
+		ret.put("exists?", new Boolean(seenRepository.exists(hash)).toString());
+		if (!seenRepository.exists(hash)) {
 			seenRepository.save(newest);
+		} else {
+			String articleId = null;
+			try {
+				Connection conn = DriverManager.getConnection("jdbc:mysql://aa106w2ihlwnfld.cwblf8lajcuh.us-west-1.rds.amazonaws.com/ebdb?user=root&password=Dylp-Oid-yUl-e");
+				PreparedStatement prepped = conn.prepareStatement("select id from articles where url = ?");
+				prepped.setString(1, uri);
+				ResultSet results = prepped.executeQuery();
+				results.next();
+				articleId = results.getString(1);
+				conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+				logger.error(e.getClass().getName()+" caught, stacktrace to follow", e);
+				articleId = "-1";
+			}
+			ret.put("articleId", articleId);
+		}
 		return ret;
 	}
 
