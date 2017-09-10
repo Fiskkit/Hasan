@@ -444,18 +444,24 @@ public class FiskController {
 						map.put(category, temp);
 					}
 				}
-
 			}
-
 		}
 		return new ResponseEntity<Map<String, Set<String>>>(map, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/hash", method = RequestMethod.GET)
-	public Boolean hash(@RequestParam(name = "uri") String uri) {
-		URIBuilder url = new URIBuilder().setHost("api.diffbot.com").setScheme("http")
-				.setPath("v3/article").addParameter("url", uri).addParameter("token", "38b9af7246e37abc105314c898d1ed0d");
-		
+	/*
+	 * @RequestMapping(value = "/schema", method=RequestMethod.GET) public
+	 * ResponseEntity<Byte[]> visualize(@RequestParam(name="url") String jdbc) { URL
+	 * jdbcUrl = new URL(jdbc); String databaseType =
+	 * jdbcUrl.getProtocol().split(":")[1]; if (databaseType.equals("mysql")) {
+	 * Class.forName("com.mysql.jdbc.Driver").newInstance(); }
+	 * 
+	 * }
+	 */ @RequestMapping(value = "/hash", method = RequestMethod.GET)
+	public Map<String, String> hash(@RequestParam(name = "uri") String uri) {
+		URIBuilder url = new URIBuilder().setHost("api.diffbot.com").setScheme("http").setPath("v3/article")
+				.addParameter("url", uri).addParameter("token", "38b9af7246e37abc105314c898d1ed0d");
+
 		Request request = null;
 		try {
 			request = new Request.Builder().url(url.build().toASCIIString()).build();
@@ -482,36 +488,67 @@ public class FiskController {
 			}
 		} catch (JSONException e) {
 			e.printStackTrace();
-			logger.error(e.getClass().getName()+" caught, stacktrace to follow", e);
+			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
 		} catch (IOException e) {
 			e.printStackTrace();
-			logger.error(e.getClass().getName()+" caught, stacktrace to follow", e);
+			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
 		}
 		String hash = new Base64().encodeToString(DigestUtils.sha1(text));
 
 		Seen newest = new Seen();
 		newest.setHash(hash);
 		logger.info("seenRepository == null => " + new Boolean(seenRepository == null).toString());
-		Map <String, String>ret = new HashMap<>();
+		Map<String, String> ret = new HashMap<>();
 		ret.put("exists?", new Boolean(seenRepository.exists(hash)).toString());
 		if (!seenRepository.exists(hash)) {
 			seenRepository.save(newest);
-		} else {
-			String articleId = null;
-			try {
-				Connection conn = DriverManager.getConnection("jdbc:mysql://aa106w2ihlwnfld.cwblf8lajcuh.us-west-1.rds.amazonaws.com/ebdb?user=root&password=Dylp-Oid-yUl-e");
-				PreparedStatement prepped = conn.prepareStatement("select id from articles where url = ?");
-				prepped.setString(1, uri);
-				ResultSet results = prepped.executeQuery();
-				results.next();
-				articleId = results.getString(1);
-				conn.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-				logger.error(e.getClass().getName()+" caught, stacktrace to follow", e);
-				articleId = "-1";
-			}
-			ret.put("articleId", articleId);
+		}
+		Connection conn = null;
+		try {
+			conn = DriverManager.getConnection(
+					"jdbc:mysql://aa106w2ihlwnfld.cwblf8lajcuh.us-west-1.rds.amazonaws.com/ebdb?user=root&password=Dylp-Oid-yUl-e");
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			logger.error(e1.getClass().getName() + " caught, stacktrace to follow", e1);
+		}
+		PreparedStatement prepped = null;
+		try {
+			prepped = conn.prepareStatement("select id from articles where url = ?");
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+			logger.error(e1.getClass().getName() + " caught, stacktrace to follow", e1);
+		}
+		try {
+			prepped.setString(1, uri);
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+			logger.error(e1.getClass().getName() + " caught, stacktrace to follow", e1);
+		}
+		ResultSet results = null;
+		try {
+			results = prepped.executeQuery();
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+			logger.error(e1.getClass().getName() + " caught, stacktrace to follow", e1);
+		}
+		try {
+			results.next();
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+			logger.error(e1.getClass().getName() + " caught, stacktrace to follow", e1);
+		}
+		try {
+			ret.put("articleId", results.getString(1));
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+			logger.error(e1.getClass().getName() + " caught, stacktrace to follow", e1);
+		}
+		try {
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
 		}
 		return ret;
 	}
