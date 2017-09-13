@@ -475,6 +475,9 @@ public class FiskController {
 	 * }
 	 */ @RequestMapping(value = "/v1/hash", method = RequestMethod.GET)
 	public Map<String, String> hash(@RequestParam(name = "uri") String uri) {
+			RateLimiter rateLimiter = RateLimiter.create(100);
+		    rateLimiter.acquire();
+
 		URIBuilder url = new URIBuilder().setHost("api.diffbot.com").setScheme("http").setPath("v3/article")
 				.addParameter("url", uri).addParameter("token", "38b9af7246e37abc105314c898d1ed0d");
 
