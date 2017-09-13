@@ -69,6 +69,7 @@ import com.fiskkit.instantEmail.models.Seen;
 import com.fiskkit.instantEmail.models.User;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultiset;
+import com.google.common.util.concurrent.RateLimiter;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.squareup.okhttp.HttpUrl;
@@ -123,6 +124,9 @@ public class FiskController {
 
 	@RequestMapping(value = "/v1/tweet/{article}", method = RequestMethod.GET)
 	public ResponseEntity<String> tweet(@PathVariable String article, @RequestParam(name = "title") String title) {
+		RateLimiter rateLimiter = RateLimiter.create(10);
+	    rateLimiter.acquire();
+	    
 		Twitter twitter = new TwitterFactory().getInstance();
 		try {
 			// get request token.
@@ -217,6 +221,9 @@ public class FiskController {
 	@RequestMapping(value = "/v1/facebook", method = RequestMethod.GET)
 	public ResponseEntity<Boolean> facebook(@RequestParam(name = "title") String article,
 			@RequestParam(name = "email") String email) {
+		RateLimiter rateLimiter = RateLimiter.create(10);
+	    rateLimiter.acquire();
+
 		String fbToken = null;
 
 		EntityManager em = Persistence.createEntityManagerFactory("FacebookPermissions").createEntityManager();
