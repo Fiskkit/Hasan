@@ -384,6 +384,9 @@ public class FiskController {
 
 	@RequestMapping(value = "/v1/readability", method = RequestMethod.POST)
 	public ResponseEntity<Double> readability(@RequestBody String text) {
+		RateLimiter rateLimiter = RateLimiter.create(5);
+	    rateLimiter.acquire();
+
 		Double ADJUSTMENT = 3.6365, score = 0.0, DIFFICULT_WORD_THRESHOLD = 0.05;
 		String[] wordsInText = text.split("[\\W]");
 		HashSet<String> words = (HashSet<String>) Arrays.stream(wordsInText).collect(Collectors.toSet());
@@ -416,6 +419,9 @@ public class FiskController {
 
 	@RequestMapping(value = "/entities", method = RequestMethod.GET)
 	public ResponseEntity<Map<String, Set<String>>> getEntities(@RequestParam(name = "loc") String location) {
+		RateLimiter rateLimiter = RateLimiter.create(5);
+	    rateLimiter.acquire();
+
 		BufferedReader contents = null;
 		try {
 			contents = new BufferedReader(new InputStreamReader(new URL(location).openStream()));
