@@ -283,6 +283,9 @@ public class FiskController {
 
 	@RequestMapping(value = "/v1/analyze", method = RequestMethod.POST)
 	public ResponseEntity<Map<String, String>> statistics(@RequestBody String text) {
+		RateLimiter rateLimiter = RateLimiter.create(10);
+	    rateLimiter.acquire();
+
 		try {
 			text = URLDecoder.decode(text, StandardCharsets.UTF_8.toString()).toLowerCase();
 		} catch (UnsupportedEncodingException e) {
