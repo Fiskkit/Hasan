@@ -47,7 +47,7 @@ public class ControllerTest {
 	@Test
 	public void twitter() throws Exception {
 		String response = restTemplate.getForObject("http://localhost:" + port
-				+ "/tweet/o8mbC8sJhC/?title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google",
+				+ "/v1/tweet/o8mbC8sJhC/?title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google",
 				String.class);
 		assertThat(response.endsWith("@hdiwan"));
 	}
@@ -55,7 +55,7 @@ public class ControllerTest {
 	@Test
 	public void facebook() throws Exception {
 		Boolean response = restTemplate.getForObject("http://localhost:" + port
-				+ "/facebook?email=hasan.diwan@gmail.com&title=title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google",
+				+ "/v1/facebook?email=hasan.diwan@gmail.com&title=title=Exclusive:%20Here%27s%20The%20Full%2010-Page%20Anti-Diversity%20Screed%20Circulating%20Internally%20at%20Google",
 				Boolean.class);
 		assertThat((response.booleanValue() == true) || (response.booleanValue() == false));
 	}
@@ -67,20 +67,20 @@ public class ControllerTest {
 
 	@Test
 	public void userValidTest() {
-		assertThat((restTemplate.getForObject("http://localhost:" + port + "/valid?subscription=1sjs9hvQ5tmUbX2I1Z",
+		assertThat((restTemplate.getForObject("http://localhost:" + port + "/v1/valid?subscription=1sjs9hvQ5tmUbX2I1Z",
 				String.class) == "true"));
 	}
 
 	@Test
 	public void expiredSubscription() {
-		assertThat(restTemplate.getForObject("http://localhost:" + port + "/valid?subscription=cbdemo_dave-sub2",
+		assertThat(restTemplate.getForObject("http://localhost:" + port + "/v1/valid?subscription=cbdemo_dave-sub2",
 				String.class) == "false");
 	}
 
 	@Test
 	public void testHash() {
-		assertThat(restTemplate.getForObject("http://localhost:"+port+"/hash?url=http%3A%2F%2Fwww.purple.com", Map.class).get("exists?").equals(Boolean.FALSE));
-		assertThat(restTemplate.getForObject("http://localhost:"+port+"/hash?url=http%3A%2F%2Fwww.purple.com", Map.class).get("exists?").equals(Boolean.TRUE));
+		assertThat(restTemplate.getForObject("http://localhost:"+port+"/v1/hash?url=http%3A%2F%2Fwww.purple.com", Map.class).get("exists?").equals(Boolean.FALSE));
+		assertThat(restTemplate.getForObject("http://localhost:"+port+"/v1/hash?url=http%3A%2F%2Fwww.purple.com", Map.class).get("exists?").equals(Boolean.TRUE));
 	}
 	@Test
 	public void readabilityOfText() {
