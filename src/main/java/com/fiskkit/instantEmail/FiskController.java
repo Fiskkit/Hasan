@@ -599,6 +599,9 @@ public class FiskController {
 	public ResponseEntity<List<String>> tokenize(@RequestBody String body,
 			@RequestParam(name = "id") String identitifier) {
 		// store the sentence tokenizer once per run
+		RateLimiter rateLimiter = RateLimiter.create(17);
+	    rateLimiter.acquire();
+
 		final List<String> returnValue = new ArrayList<>();
 		if (binFile == null) {
 			try {
