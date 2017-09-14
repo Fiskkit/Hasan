@@ -122,11 +122,11 @@ public class FiskController {
 	@Value("${fiskkit.tweetMessage}")
 	String TWITTER_MESSAGE;
 
-	@RequestMapping(value = "/v1/tweet/{article}", method = RequestMethod.GET)
+	@RequestMapping(value = {"/v1/tweet/{article}", "/tweet/{article}"},  method = RequestMethod.GET)
 	public ResponseEntity<String> tweet(@PathVariable String article, @RequestParam(name = "title") String title) {
 		RateLimiter rateLimiter = RateLimiter.create(10);
-	    rateLimiter.acquire();
-	    
+		rateLimiter.acquire();
+
 		Twitter twitter = new TwitterFactory().getInstance();
 		try {
 			// get request token.
@@ -218,11 +218,11 @@ public class FiskController {
 		return new ResponseEntity<String>(status.getText(), HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/v1/facebook", method = RequestMethod.GET)
+	@RequestMapping(value = {"/facebook", "/v1/facebook" }, method = RequestMethod.GET)
 	public ResponseEntity<Boolean> facebook(@RequestParam(name = "title") String article,
 			@RequestParam(name = "email") String email) {
 		RateLimiter rateLimiter = RateLimiter.create(10);
-	    rateLimiter.acquire();
+		rateLimiter.acquire();
 
 		String fbToken = null;
 
@@ -258,7 +258,7 @@ public class FiskController {
 		return new ResponseEntity<Boolean>(Boolean.TRUE, HttpStatus.CREATED);
 	}
 
-	@RequestMapping(value = "/v1/valid", method = RequestMethod.GET)
+	@RequestMapping(value = {"/valid", "/v1/valid"}, method = RequestMethod.GET)
 	public ResponseEntity<Boolean> getBalance(@RequestParam(name = "subscription") String subscriptionId) {
 		Environment.configure(chargebeeEnvironment, chargebeeSecret);
 		logger.info("susbscription id requested: " + subscriptionId);
@@ -271,7 +271,7 @@ public class FiskController {
 		return new ResponseEntity<Boolean>(Boolean.TRUE, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/", method = RequestMethod.POST)
+	@RequestMapping(value = {"/v1" , "/"}, method = RequestMethod.POST)
 	public ResponseEntity<String> newOrg(@RequestParam(name = "id") String organizationUniqueId,
 			@RequestParam(name = "subscription") String subscriptionId) {
 		User user = new User();
@@ -281,10 +281,10 @@ public class FiskController {
 		return new ResponseEntity<String>(user.toString(), HttpStatus.CREATED);
 	}
 
-	@RequestMapping(value = "/v1/analyze", method = RequestMethod.POST)
+	@RequestMapping(value = {"/analyze", "/v1/analyze"}, method = RequestMethod.POST)
 	public ResponseEntity<Map<String, String>> statistics(@RequestBody String text) {
 		RateLimiter rateLimiter = RateLimiter.create(10);
-	    rateLimiter.acquire();
+		rateLimiter.acquire();
 
 		try {
 			text = URLDecoder.decode(text, StandardCharsets.UTF_8.toString()).toLowerCase();
@@ -321,7 +321,7 @@ public class FiskController {
 		return new ResponseEntity<Map<String, String>>(ret, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/callback", method = RequestMethod.POST)
+	@RequestMapping(value = { "/callback", "/v1/callback"}, method = RequestMethod.POST)
 	public ResponseEntity<String> chargebeeWebhooks(@RequestParam Map<String, String> params,
 			@RequestBody String rawBody) {
 		JSONObject json = null;
@@ -372,7 +372,7 @@ public class FiskController {
 		return new ResponseEntity<String>("failed", HttpStatus.CONFLICT);
 	}
 
-	@RequestMapping(value = "/url", method = RequestMethod.GET)
+	@RequestMapping(value = {"/v1/url", "/url"}, method = RequestMethod.GET)
 	public ResponseEntity<Boolean> isUrl(@RequestParam(name = "url") String loc) {
 		try {
 			new URL(loc);
@@ -382,10 +382,10 @@ public class FiskController {
 		return new ResponseEntity<Boolean>(Boolean.TRUE, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/v1/readability", method = RequestMethod.POST)
+	@RequestMapping(value = {"/v1/readability", "/readability"}, method = RequestMethod.POST)
 	public ResponseEntity<Double> readability(@RequestBody String text) {
 		RateLimiter rateLimiter = RateLimiter.create(5);
-	    rateLimiter.acquire();
+		rateLimiter.acquire();
 
 		Double ADJUSTMENT = 3.6365, score = 0.0, DIFFICULT_WORD_THRESHOLD = 0.05;
 		String[] wordsInText = text.split("[\\W]");
@@ -417,10 +417,10 @@ public class FiskController {
 		return new ResponseEntity<Double>(score, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/entities", method = RequestMethod.GET)
+	@RequestMapping(value = {"/v1/entities", "entities"}, method = RequestMethod.GET)
 	public ResponseEntity<Map<String, Set<String>>> getEntities(@RequestParam(name = "loc") String location) {
 		RateLimiter rateLimiter = RateLimiter.create(5);
-	    rateLimiter.acquire();
+		rateLimiter.acquire();
 
 		BufferedReader contents = null;
 		try {
@@ -465,19 +465,11 @@ public class FiskController {
 		return new ResponseEntity<Map<String, Set<String>>>(map, HttpStatus.OK);
 	}
 
-	/*
-	 * @RequestMapping(value = "/schema", method=RequestMethod.GET) public
-	 * ResponseEntity<Byte[]> visualize(@RequestParam(name="url") String jdbc) { URL
-	 * jdbcUrl = new URL(jdbc); String databaseType =
-	 * jdbcUrl.getProtocol().split(":")[1]; if (databaseType.equals("mysql")) {
-	 * Class.forName("com.mysql.jdbc.Driver").newInstance(); }
-	 * 
-	 * }
-	 */ @RequestMapping(value = "/v1/hash", method = RequestMethod.GET)
+	@RequestMapping(value = {"/hash", "/v1/hash"}, method = RequestMethod.GET)
 	public Map<String, String> hash(@RequestParam(name = "uri") String uri) {
-			RateLimiter rateLimiter = RateLimiter.create(100);
-		    rateLimiter.acquire();
-
+		RateLimiter rateLimiter = RateLimiter.create(100);
+		rateLimiter.acquire();
+		
 		URIBuilder url = new URIBuilder().setHost("api.diffbot.com").setScheme("http").setPath("v3/article")
 				.addParameter("url", uri).addParameter("token", "38b9af7246e37abc105314c898d1ed0d");
 
@@ -571,7 +563,7 @@ public class FiskController {
 		return ret;
 	}
 
-	@RequestMapping(value = "/v1/text", method = RequestMethod.GET)
+	@RequestMapping(value = {"/text", "/v1/text" }, method = RequestMethod.GET)
 	public ResponseEntity<String> getText(@RequestParam(name = "uri") String uri) {
 		HttpUrl.Builder urlBuilder = HttpUrl.parse(uri).newBuilder();
 		urlBuilder.addQueryParameter("uri", uri);
@@ -595,12 +587,12 @@ public class FiskController {
 		return new ResponseEntity<>(soup.text(), HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/v1/phrases", method = RequestMethod.POST)
+	@RequestMapping(value = { "/phrases", "/v1/phrases"}, method = RequestMethod.POST)
 	public ResponseEntity<List<String>> tokenize(@RequestBody String body,
 			@RequestParam(name = "id") String identitifier) {
 		// store the sentence tokenizer once per run
 		RateLimiter rateLimiter = RateLimiter.create(17);
-	    rateLimiter.acquire();
+		rateLimiter.acquire();
 
 		final List<String> returnValue = new ArrayList<>();
 		if (binFile == null) {
