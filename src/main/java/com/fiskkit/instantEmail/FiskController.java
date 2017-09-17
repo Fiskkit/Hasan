@@ -3,7 +3,6 @@ package com.fiskkit.instantEmail;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -12,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -24,8 +24,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -297,7 +295,6 @@ public class FiskController {
 			text = URLDecoder.decode(text, StandardCharsets.UTF_8.toString()).toLowerCase();
 		} catch (UnsupportedEncodingException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 		Tokenizer<Word> ptbt = PTBTokenizer.factory().getTokenizer(new StringReader(text));
 		Map<String, String> ret = new HashMap<>();
@@ -354,7 +351,6 @@ public class FiskController {
 			customerLastName = json.getJSONObject("content").getJSONObject("customer").getString("last_name");
 		} catch (JSONException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 		User user = new User();
 		user.setChargebeeId(customerId);
@@ -404,7 +400,6 @@ public class FiskController {
 					new URL("http://countwordsworth.com/download/DaleChallEasyWordList.txt").openStream()));
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 		String word;
 		try {
@@ -413,7 +408,6 @@ public class FiskController {
 			}
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 		words.retainAll(simpleWords);
 		int countsSimpleWords = words.size();
@@ -434,7 +428,6 @@ public class FiskController {
 			contents = new BufferedReader(new InputStreamReader(new URL(location).openStream()));
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 		String text = null, line = null;
 		try {
@@ -443,7 +436,6 @@ public class FiskController {
 			}
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 
 		Map<String, Set<String>> map = new HashMap<>();
@@ -493,7 +485,6 @@ public class FiskController {
 			response = client.newCall(request).execute();
 		} catch (IOException e1) {
 			logger.error(e1.getMessage(), e1);
-			e1.printStackTrace();
 		}
 		String text = null;
 		try {
@@ -505,10 +496,8 @@ public class FiskController {
 				text = json.getJSONArray("objects").getJSONObject(0).getString("html");
 			}
 		} catch (JSONException e) {
-			e.printStackTrace();
 			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
 		} catch (IOException e) {
-			e.printStackTrace();
 			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
 		}
 		String hash = new Base64().encodeToString(DigestUtils.sha1(text));
@@ -603,50 +592,46 @@ public class FiskController {
 			args.add(String.format("-p %s", databasePassword));
 		}
 		args.add(String.format("-port %d", port));
-		args.add(String.format("-o %s", System.getProperty("java.io.tmpdir")));
-		File fl = new File(System.getProperty("java.io.tmpdir"));
-		List<Long> l = Collections.singletonList(0L);
-		File[] files = fl.listFiles(new FileFilter() {
-			public boolean accept(File file) {
-				long lastmodified = file.lastModified();
-				if (lastmodified > l.get(1)) {
-					l.set(1, lastmodified);
-					return true;
-				}
-				return false;
-			}
-		});
-
-		args.add("-hq");
+		File fl = null;
 		try {
-			Main.main((String[]) args.toArray());
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
+			fl = File.createTempFile("schema", ".dot");
+		} catch (IOException e1) {
+			logger.error(e1.getClass().getName() + " caught, stacktrace to follow", e1);
 		}
-		List<File> dirContents = new ArrayList<>();
-		Collections.addAll(dirContents, files);
-		dirContents.sort(new Comparator<File>() {
-			@Override
-			public int compare(File o1, File o2) {
-				return new Long(o1.lastModified()).compareTo(new Long(o2.lastModified()));
+		args.add("-o " + fl.getAbsolutePath());
+		List<Long> l = new ArrayList<>();
+		l.add(0L);
+		args.add("-hq");
+		Runnable r = new Thread() {
+			public void run() {
+				try {
+					Main.main(args.toArray(new String[] {}));
+				} catch (Exception e) {
+					logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
+				}
 			}
-		});
-		File latest = dirContents.get(1);
+		};
+		Thread t = new Thread(r);
+		t.start();
+		try {
+			t.join();
+		} catch (InterruptedException e1) {
+			logger.error(e1.getClass().getName()+" caught, stacktrace to follow", e1);
+		}
+
 		FileInputStream bais = null;
 		try {
-			bais = new FileInputStream(latest);
+			bais = new FileInputStream(fl);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
 		}
-		byte[] data = new byte[new Long(latest.length()).intValue()];
+		byte[] data = new byte[new Long(fl.length() + 1L).intValue()];
 		try {
 			bais.read(data);
 		} catch (IOException e) {
-			e.printStackTrace();
 			logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
 		}
+		fl.delete();
 		response.setContentType("text/vnd.graphviz");
 		return new ResponseEntity<>(data, HttpStatus.CREATED);
 	}
@@ -663,7 +648,6 @@ public class FiskController {
 			response = client.newCall(request).execute();
 		} catch (IOException e1) {
 			logger.error(e1.getMessage(), e1);
-			e1.printStackTrace();
 		}
 		String text = null;
 		try {
@@ -688,7 +672,6 @@ public class FiskController {
 				binFile = File.createTempFile("en-sent", ".bin");
 			} catch (IOException e1) {
 				logger.error(e1.getClass().getName() + " caught, stacktrace to follow", e1);
-				e1.printStackTrace();
 			}
 			String url = "http://opennlp.sourceforge.net/models-1.5/en-sent.bin";
 			Request request = new Request.Builder().url(HttpUrl.parse(url)).build();
@@ -696,14 +679,12 @@ public class FiskController {
 			try {
 				response = client.newCall(request).execute();
 			} catch (IOException e1) {
-				e1.printStackTrace();
 				logger.error(e1.getClass().getName() + " caught, stacktrace to follow", e1);
 			}
 			try {
 				BufferedInputStream bis = new BufferedInputStream(response.body().byteStream());
 				IOUtils.copy(bis, new FileOutputStream(binFile));
 			} catch (IOException e) {
-				e.printStackTrace();
 				logger.error(e.getClass().getName() + " caught, stacktrace to follow", e);
 			}
 		}
