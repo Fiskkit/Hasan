@@ -59,7 +59,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -100,7 +99,6 @@ import twitter4j.TwitterFactory;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
-@Controller
 @RestController
 @Component
 public class FiskController {
@@ -329,14 +327,12 @@ public class FiskController {
                 @Override
                 public void onResponse(final Response resp) throws IOException {
                     if (resp.isSuccessful()) {
-                        Gson gson = new Gson();
-                        Type type = new TypeToken<Map<String, String>> () {}.getType();
-                        Map<String, String> myMap = gson.fromJson(resp.body().string(), type);
-
-                        String pageSummary = myMap.get("sm_api_content");
-                        response.put("summary", pageSummary);
+                    
+                        response.put("rawResponse", resp.body().string()); 
+                        //String pageSummary = myMap.get("sm_api_content");
+                        //response.put("summary", pageSummary);
                     } else {
-                        throw new IOException("smrry.com failed");
+                        throw new RuntimeException("smrry.com failed");
                     }
                 }
             });
