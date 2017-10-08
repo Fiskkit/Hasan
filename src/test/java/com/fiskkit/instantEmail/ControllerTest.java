@@ -52,6 +52,11 @@ public class ControllerTest {
 		assertThat(response.endsWith("@hdiwan"));
 	}
 
+  @Test
+  public void preview() throws Exception {
+    Map<String, String> response = restTemplate.getForObject("http://localhost:"+port+"/v1/preview?loc=http://purple.com", Map.class);
+    assertThat(response.containsKey("image") && response.containsKey("summary"));
+  }
 	@Test
 	public void facebook() throws Exception {
 		Boolean response = restTemplate.getForObject("http://localhost:" + port
