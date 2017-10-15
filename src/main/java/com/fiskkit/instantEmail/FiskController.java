@@ -10,9 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Type;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -65,6 +63,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.chargebee.Environment;
 import com.chargebee.models.Subscription;
 import com.fiskkit.instantEmail.models.FacebookPermissions;
@@ -75,13 +74,13 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.util.concurrent.RateLimiter;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+
 import edu.stanford.nlp.ie.crf.CRFClassifier;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
@@ -280,10 +279,9 @@ public class FiskController {
         final Map<String, String> response = new HashMap<>();
 
         HttpUrl.Builder urlBuilder = new HttpUrl.Builder();
-        // TODO make the key a resource
-        //urlBuilder.uri("http://api.screenshotlayer.com/capture");
         urlBuilder.scheme("http").host("api.screenshotlayer.com").encodedPath("/capture");
 
+        // TODO make the key a resource
         urlBuilder.addQueryParameter("access_key", "13a9e69d54075bc0d88131bb44687931");
         try {
           urlBuilder.addQueryParameter("url", org.springframework.web.util.UriUtils.encode(loc, java.nio.charset.Charset.defaultCharset().toString()));
@@ -306,7 +304,6 @@ public class FiskController {
                     if (!resp.isSuccessful()) {
                         throw new IOException("Unexpected code " + response);
                     } else {
-
                         response.put("image", Base64.encodeBase64String(resp.body().bytes()));
                         response.put("url", url);
                         response.put("timestamp", new Long(System.currentTimeMillis()).toString());
@@ -327,7 +324,6 @@ public class FiskController {
                 @Override
                 public void onResponse(final Response resp) throws IOException {
                     if (resp.isSuccessful()) {
-                    
                         response.put("rawResponse", resp.body().string()); 
                         //String pageSummary = myMap.get("sm_api_content");
                         //response.put("summary", pageSummary);
@@ -338,10 +334,10 @@ public class FiskController {
             });
 
         while ((!response.containsKey("image")) || (!response.containsKey("summmary"))) {
-            // wait for remoe taPIs to respond
+            // wait for remoe APIs to respond
         }
 
-        return new ResponseEntity(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @RequestMapping(value = { "/v1", "/" }, method = RequestMethod.POST)
